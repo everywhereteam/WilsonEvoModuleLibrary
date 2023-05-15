@@ -20,13 +20,10 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
-        source-url: https://nuget.pkg.github.com/everywhereteam/index.json
       env:
         NUGET_AUTH_TOKEN: ${{ github.token }}
     - name: Restore dependencies
       run: dotnet restore
-      env:
-        NUGET_AUTH_TOKEN: ${{ github.token }}
     - name: Build
       run: dotnet build -c Release --nologo --no-restore
     - name: Test
@@ -34,5 +31,7 @@ jobs:
     - name: dotnet pack
       run: dotnet pack -c Release --nologo --no-build
       if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    - name: Prep packages
+      run: dotnet nuget add source --username TheSmallPixel --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/everywhereteam/index.json"
     - name: dotnet push GITHUB NUGET
       run: dotnet nuget push ${{ github.workspace }}/bin/**/*.nupkg --api-key ${{ github.token  }} --no-symbols --skip-duplicate --source "github"
