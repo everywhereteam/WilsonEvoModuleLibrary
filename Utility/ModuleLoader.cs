@@ -1,0 +1,119 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
+using WilsonPluginInterface.Services;
+using WilsonPluginModels;
+using WilsonPluginModels.Interfaces;
+
+namespace WilsonPluginInterface.Utility;
+
+public static class ModuleLoader
+{
+    public static void AddWilsonCore(this IServiceCollection services)
+    {
+        Console.WriteLine(@"
+ _       ___ __                    ___          _    __  ___          __      __        
+| |     / (_) /________  ____     /   |  ____  (_)  /  |/  /___  ____/ /_  __/ /__      
+| | /| / / / / ___/ __ \/ __ \   / /| | / __ \/ /  / /|_/ / __ \/ __  / / / / / _ \     
+| |/ |/ / / (__  ) /_/ / / / /  / ___ |/ /_/ / /  / /  / / /_/ / /_/ / /_/ / /  __/     
+|__/|__/_/_/____/\____/_/ /_/  /_/  |_/ .___/_/  /_/  /_/\____/\__,_/\__,_/_/\___/      
+    ______                     _     /_/___                                  __         
+   / ____/   _____  _______  _| |     / / /_  ___  ________     _____  _____/ /         
+  / __/ | | / / _ \/ ___/ / / / | /| / / __ \/ _ \/ ___/ _ \   / ___/ / ___/ /          
+ / /___ | |/ /  __/ /  / /_/ /| |/ |/ / / / /  __/ /  /  __/  (__  ) / /  / /           
+/_____/ |___/\___/_/   \__, / |__/|__/_/ /_/\___/_/   \___/  /____(_)_(_)/_(_)          
+                      /____/");
+        services.LoadNodeServices();
+        services.AddSingleton<NodeServiceMapper>();
+        services.AddSingleton<WilsonCoreClient>();
+        services.AddHttpClient<WilsonCoreClient>().AddTransientHttpErrorPolicy(policy =>
+            policy.WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), 5)));
+    }
+
+    public static void LoadNodeServices(this IServiceCollection services)
+    {
+        List<Type> types = new();
+        var currentDomain = AppDomain.CurrentDomain;
+        var assemblies = currentDomain.GetAssemblies();
+        foreach (var assembly in assemblies) types.AddRange(GetNodeService(assembly));
+
+        WriteCoolDebug("Loading the services container:");
+        foreach (var type in types)
+            try
+            {
+                var serviceInterface = GetNodeServiceInterface(type);
+                services.AddTransient(serviceInterface, type);
+                WriteCoolDebug($"- ({serviceInterface.Name}){type.Name}", " Loaded", ConsoleColor.Green);
+            }
+            catch (Exception)
+            {
+                WriteCoolDebug($"- (...){type.Name}", " Error", ConsoleColor.DarkRed);
+                throw;
+            }
+    }
+
+    //public static void LoadExternalService(this IServiceCollection services)
+    //{
+    //    var currentDomain = AppDomain.CurrentDomain;
+    //    var assemblies = currentDomain.GetAssemblies();
+    //    var typesSingle = assemblies
+    //        .SelectMany(a => a.GetTypes().Where(x => x.IsClass && x.IsAssignableTo(typeof(ISingletonService)))).ToList();
+    //    foreach (var type in typesSingle)
+    //    {
+    //        services.AddSingleton(typeof(ISingletonService), type);
+    //    }
+    //    var typesTrasient = assemblies
+    //        .SelectMany(a => a.GetTypes().Where(x => x.IsClass && x.IsAssignableTo(typeof(ITransientService)))).ToList();
+    //    foreach (var type in typesTrasient)
+    //    {
+    //        services.AddScoped(typeof(ITransientService), type);
+    //    }
+
+    //    services.AddSingleton<IJobScheduler, JobScheduler>();
+    //}
+
+    //public static void StartupService(this WebApplication webApplication)
+    //{
+    //    webApplication.Services.GetServices<ISingletonService>();
+    //}
+
+
+    private static void WriteCoolDebug(string msg, string status = "", ConsoleColor color = ConsoleColor.White)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.Write("[NodeService] ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(msg);
+        Console.ForegroundColor = color;
+        Console.WriteLine(status);
+        Console.ResetColor();
+    }
+
+    private static bool CheckType(Type type)
+    {
+        return type == typeof(NodeService<>) || type == typeof(NodeServices<,>) || type == typeof(AsyncNodeService<>) ||
+               type == typeof(AsyncNodeServices<,>);
+    }
+
+    private static bool CheckInterfaceType(Type type)
+    {
+        return type == typeof(INodeService<>) || type == typeof(INodeServices<,>) ||
+               type == typeof(IAsyncNodeService<>) || type == typeof(IAsyncNodeServices<,>);
+    }
+
+    public static IEnumerable<Type> GetNodeService(Assembly assembly)
+    {
+        return assembly.GetTypes().Where(
+            t => t.IsClass && !t.IsAbstract && t.BaseType != null && t.BaseType.IsGenericType &&
+                 CheckType(t.BaseType.GetGenericTypeDefinition()));
+    }
+
+    public static Type GetNodeServiceInterface(Type type)
+    {
+        return type.GetInterfaces().First(i => i.IsGenericType && CheckInterfaceType(i.GetGenericTypeDefinition()));
+    }
+}
