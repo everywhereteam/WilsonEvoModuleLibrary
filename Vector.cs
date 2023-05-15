@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WilsonPluginModels
+namespace WilsonEvoModuleLibrary
 {
     [Serializable]
     public sealed class Vector

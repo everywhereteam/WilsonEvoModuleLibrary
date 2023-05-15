@@ -1,8 +1,8 @@
-﻿using WilsonPluginInterface.Attributes;
-using WilsonPluginInterface.Attributes.Property;
-using WilsonPluginModels.Interfaces;
+﻿using WilsonEvoModuleLibrary.Attributes;
+using WilsonEvoModuleLibrary.Attributes.Property;
+using WilsonEvoModuleLibrary.Interfaces;
 
-namespace WilsonPluginCommons.Nodes;
+namespace WilsonEvoModuleLibrary.Nodes;
 
 [TaskDefinition("Input Intent", "Categoria.INTENT", "NotFound", "MaxExc", "ok", "error")]
 public class InputProcessTask : INode

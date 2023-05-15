@@ -1,6 +1,6 @@
-﻿using WilsonPluginInterface.Attributes;
+﻿using WilsonEvoModuleLibrary.Attributes;
 
-namespace WilsonPluginCommons.Configurations;
+namespace WilsonEvoModuleLibrary.Configurations;
 
 [ServiceProviderConfiguration("Email server credentials")]
 public class EmailServerProcessConfiguration

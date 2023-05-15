@@ -5,11 +5,10 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
-using WilsonPluginInterface.Services;
-using WilsonPluginModels;
-using WilsonPluginModels.Interfaces;
+using WilsonEvoModuleLibrary.Interfaces;
+using WilsonEvoModuleLibrary.Services;
 
-namespace WilsonPluginInterface.Utility;
+namespace WilsonEvoModuleLibrary.Utility;
 
 public static class ModuleLoader
 {

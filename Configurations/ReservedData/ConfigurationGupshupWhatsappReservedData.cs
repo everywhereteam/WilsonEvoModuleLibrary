@@ -1,4 +1,4 @@
-﻿namespace WilsonPluginCommons.Configurations.ReservedData;
+﻿namespace WilsonEvoModuleLibrary.Configurations.ReservedData;
 
 public class ConfigurationGupshupWhatsappReservedData
 {

@@ -4,11 +4,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
-using WilsonPluginInterface.Services;
-using WilsonPluginModels;
-using WilsonPluginModels.Interfaces;
+using WilsonEvoModuleLibrary.Interfaces;
+using WilsonEvoModuleLibrary.Services;
 
-namespace WilsonPluginInterface.Controllers;
+namespace WilsonEvoModuleLibrary.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]

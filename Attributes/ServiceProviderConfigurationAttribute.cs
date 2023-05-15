@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WilsonPluginInterface.Attributes;
+namespace WilsonEvoModuleLibrary.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public class ServiceProviderConfigurationAttribute : Attribute

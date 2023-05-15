@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using WilsonPluginInterface.Attributes;
-using WilsonPluginInterface.Attributes.Property;
-using WilsonPluginModels.Interfaces;
+using WilsonEvoModuleLibrary.Attributes;
+using WilsonEvoModuleLibrary.Attributes.Property;
+using WilsonEvoModuleLibrary.Interfaces;
 
-namespace WilsonPluginCommons.Nodes;
+namespace WilsonEvoModuleLibrary.Nodes;
 
 [TaskDefinition("Script", "Advanced", OutputDefault, OutputError)]
 public class ScriptProcessTask : INode

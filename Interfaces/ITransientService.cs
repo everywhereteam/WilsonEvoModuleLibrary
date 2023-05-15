@@ -1,4 +1,4 @@
-﻿namespace WilsonPluginModels.Interfaces
+﻿namespace WilsonEvoModuleLibrary.Interfaces
 {
     public interface ITransientService
     {

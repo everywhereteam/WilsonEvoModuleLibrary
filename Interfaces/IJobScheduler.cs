@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace WilsonPluginModels.Interfaces
+namespace WilsonEvoModuleLibrary.Interfaces
 {
     public interface IJobScheduler
     {

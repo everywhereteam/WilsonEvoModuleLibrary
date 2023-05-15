@@ -1,4 +1,4 @@
-﻿namespace WilsonPluginModels
+﻿namespace WilsonEvoModuleLibrary
 {
     public class ServiceResponse
     {

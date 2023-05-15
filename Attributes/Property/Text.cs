@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WilsonPluginInterface.Attributes.Property;
+namespace WilsonEvoModuleLibrary.Attributes.Property;
 
 [Serializable]
 [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]

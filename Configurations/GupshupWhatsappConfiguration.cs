@@ -1,7 +1,7 @@
-﻿using WilsonPluginInterface.Attributes;
-using WilsonPluginInterface.Attributes.Property;
+﻿using WilsonEvoModuleLibrary.Attributes;
+using WilsonEvoModuleLibrary.Attributes.Property;
 
-namespace WilsonPluginCommons.Configurations;
+namespace WilsonEvoModuleLibrary.Configurations;
 
 [ServiceProviderConfiguration("CONFIGURATION : WHATSAPP")]
 public class GupshupWhatsappConfiguration

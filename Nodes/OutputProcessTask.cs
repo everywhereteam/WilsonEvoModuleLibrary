@@ -1,7 +1,7 @@
-﻿using WilsonPluginInterface.Attributes.Property;
-using WilsonPluginModels.Interfaces;
+﻿using WilsonEvoModuleLibrary.Attributes.Property;
+using WilsonEvoModuleLibrary.Interfaces;
 
-namespace WilsonPluginCommons.Nodes;
+namespace WilsonEvoModuleLibrary.Nodes;
 
 public class OutputProcessTask : INode
 {

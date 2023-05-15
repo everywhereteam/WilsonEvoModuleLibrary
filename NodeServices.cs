@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using WilsonPluginModels.Interfaces;
+using WilsonEvoModuleLibrary.Interfaces;
 
-namespace WilsonPluginModels
+namespace WilsonEvoModuleLibrary
 {
     public abstract class NodeServices<TN, TC> : IExecutionService, INodeServices<TN, TC>
         where TN : INode where TC : class

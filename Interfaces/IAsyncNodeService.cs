@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace WilsonPluginModels.Interfaces
+namespace WilsonEvoModuleLibrary.Interfaces
 {
     public interface IAsyncNodeService<TN> where TN : INode
     {

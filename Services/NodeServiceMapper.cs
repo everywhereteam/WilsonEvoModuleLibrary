@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WilsonPluginInterface.Utility;
-using WilsonPluginModels;
-using WilsonPluginModels.Interfaces;
+using WilsonEvoModuleLibrary.Interfaces;
+using WilsonEvoModuleLibrary.Utility;
 
-namespace WilsonPluginInterface.Services;
+namespace WilsonEvoModuleLibrary.Services;
 
 public sealed class NodeServiceMapper
 {
