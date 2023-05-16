@@ -28,6 +28,7 @@ namespace WilsonEvoModuleLibrary
         public object Request { get; set; }
         public object Response { get; set; }
         public string CurrentNodeId { get; set; }
+        public string CurrentShortUrl { get; set; }
         public string CurrentOutput { get; set; }
         public string CurrentPoolId { get; set; }
         public bool WaitingCallback { get; set; } = false;
