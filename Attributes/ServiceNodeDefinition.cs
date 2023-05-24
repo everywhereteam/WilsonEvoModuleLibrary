@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace WilsonEvoModuleLibrary.Attributes
 {
-    public class ServiceNodeDefinition
+    public class ModuleNodeDefinition
     {
-        public List<ServiceNodePropertyDefinition> PropertyDefinitions { get; set; } = new();
+        public List<ModuleNodePropertyDefinition> PropertyDefinitions { get; set; } = new();
 
 
     }
 
-    public class ServiceNodePropertyDefinition
+    public class ModuleNodePropertyDefinition
     {
         public string Name { get; set; }
         public string? DisplayName { get; set; }
@@ -24,11 +24,11 @@ namespace WilsonEvoModuleLibrary.Attributes
         public string[] SelectionStrings { get; set; }
     }
 
-    public static class ServiceNodePropertyDefinitionExtensions
+    public static class ModuleNodePropertyDefinitionExtensions
     {
-        public static ServiceNodeDefinition GetDefinition<T>(this T obj)
+        public static ModuleNodeDefinition GetDefinition<T>(this T obj)
         {
-            var definition = new ServiceNodeDefinition();
+            var definition = new ModuleNodeDefinition();
             var proList = typeof(T).GetProperties();
             foreach (var prp in proList)
             {
