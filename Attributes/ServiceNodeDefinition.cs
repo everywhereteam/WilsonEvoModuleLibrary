@@ -35,7 +35,7 @@ namespace WilsonEvoModuleLibrary.Attributes
                 var attrList = (DataTypeAttribute)prp.GetCustomAttributes(typeof(DataTypeAttribute), false).First();
                 var displayLabel = (DisplayAttribute)prp.GetCustomAttributes(typeof(DisplayAttribute), false).First();
                 // Get the initial property value
-                var servicePropDef = new ServiceNodePropertyDefinition()
+                var servicePropDef = new ModuleNodePropertyDefinition()
                 {
                     Name = prp.Name,
                     DisplayName = displayLabel?.Name,
