@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Interfaces;
 using WilsonEvoModuleLibrary.Utility;
 
@@ -23,14 +26,10 @@ public sealed class NodeServiceMapper
         }
     }
 
-    /// <summary>
-    ///     Return a single service for the next action
-    /// </summary>
-    /// <param name="node">The next node class</param>
-    /// <param name="sessionData">SessionData data</param>
-    /// <returns></returns>
-    public async Task<ServiceResponse> ExecuteService(INode node, SessionData session)
+    public async Task<ServiceResponse> ExecuteService(ServiceRequest request)
     {
+        var session = request.SessionData;
+        var node = await ReadSessionData(request);
         var response = new ServiceResponse();
         var output = "ok";
         var type = Type.GetType(session.ChannelType);
@@ -55,6 +54,19 @@ public sealed class NodeServiceMapper
         session.CurrentOutput = output;
         response.SessionData = session;
         return response;
+    }
+
+    private async Task<INode?> ReadSessionData(ServiceRequest request)
+    {                      
+        var ms = new MemoryStream(request.NodeData);
+
+        using var reader = new BsonDataReader(ms);
+        var o = (JObject)await JToken.ReadFromAsync(reader);
+        var getType = Type.GetType(request.Type);
+        if (getType != null) 
+            return (INode)o.ToObject(getType);
+
+        return null;   
     }
 
     private void AddService(IEnumerable<Type> services)
