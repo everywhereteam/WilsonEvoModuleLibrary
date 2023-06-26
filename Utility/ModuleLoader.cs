@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
+using WilsonEvoModuleLibrary.Hubs;
 using WilsonEvoModuleLibrary.Interfaces;
 using WilsonEvoModuleLibrary.Services;
 
@@ -34,11 +35,8 @@ public static class ModuleLoader
             {
                 options.Headers.Add("api-key", apiKey);
             }));
-        services.AddHostedService<WilsonCoreClientTransport>();
+        services.AddHostedService<ModuleClient>();
         services.AddSingleton<NodeServiceMapper>();
-        services.AddSingleton<WilsonCoreClient>();
-        services.AddHttpClient<WilsonCoreClient>().AddTransientHttpErrorPolicy(policy =>
-            policy.WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), 5)));
     }
 
     public static void LoadNodeServices(this IServiceCollection services)
