@@ -34,8 +34,13 @@ public static class ModuleLoader
         services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
             {
                 options.Headers.Add("api-key", apiKey);
-            }));
-        services.AddHostedService<ModuleClient>();
+            }));                                    
+
+        services.AddSingleton<ModuleClient>();
+        services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
+        services.AddHostedService<ModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
+
+
         services.AddSingleton<NodeServiceMapper>();
     }
 
