@@ -17,12 +17,22 @@ namespace WilsonEvoModuleLibrary.Hubs
         private HubConnection _connection;
         private readonly NodeServiceMapper _mapper;
         private readonly ILogger _logger;
+        private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-        public ModuleClient(ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper)
+        public ModuleClient(ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime  hostApplicationLifetime)
         {
             _hubConnectionBuilder = hubConnectionBuilder;
             _mapper = mapper;
             _logger = logger;
+            _hostApplicationLifetime = hostApplicationLifetime;
+
+            _hostApplicationLifetime.ApplicationStarted.Register(()=>Connect());
+
+                _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
+
+            _connection.On<ServiceRequest, ServiceResponse>("Execute", Execute);
+            _connection.On<byte[]>("ModuleConfiguration", ModuleConfiguration);
+            _connection.Closed += Reconnect;
         }
 
         public async Task Log(LogLevel logLevel, EventId eventId, string? state = null, string? sessionId = null, Exception? exception = null, CancellationToken token = default)
@@ -56,31 +66,28 @@ namespace WilsonEvoModuleLibrary.Hubs
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
+             
+        }
 
-            _connection.On<ServiceRequest, ServiceResponse>("Execute", Execute);
-            _connection.On<byte[]>("ModuleConfiguration", ModuleConfiguration);
-            _connection.Closed += Reconnect;
-
+        private async Task Connect()
+        {
             int retryCount = 0;
 
             while (true)
             {
                 try
                 {
-                    await _connection.StartAsync(cancellationToken);
-                    return; // If successful, return from the method
+                    await _connection.StartAsync();
+                    break;
                 }
                 catch (Exception e)
                 {
 
                     retryCount++;
-                    Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}.");
-                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}. ");
+                    await Task.Delay(TimeSpan.FromSeconds(10));
                 }
             }
-            
-
         }
 
         private async Task Reconnect(Exception? error)
