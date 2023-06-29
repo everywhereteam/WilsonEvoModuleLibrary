@@ -19,16 +19,16 @@ namespace WilsonEvoModuleLibrary.Hubs
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-        public ModuleClient(ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime  hostApplicationLifetime)
+        public ModuleClient(ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
         {
             _hubConnectionBuilder = hubConnectionBuilder;
             _mapper = mapper;
             _logger = logger;
             _hostApplicationLifetime = hostApplicationLifetime;
 
-            _hostApplicationLifetime.ApplicationStarted.Register(()=>Connect());
+            _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
 
-                _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
+            _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
             _connection.On<ServiceRequest, ServiceResponse>("Execute", Execute);
             _connection.On<byte[]>("ModuleConfiguration", ModuleConfiguration);
@@ -40,9 +40,11 @@ namespace WilsonEvoModuleLibrary.Hubs
             await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
         }
 
-        public async Task<R> Start<R>(object channel, SessionData session)
+        public async Task<R> Start<R>(object channel, string shortUrl, SessionData session = null)
         {
+            session ??= new SessionData();
             session.ChannelType = channel.GetType().AssemblyQualifiedName ?? string.Empty;
+            session.CurrentShortUrl = shortUrl;
             var response = await _connection.InvokeAsync<SessionData>("Start", session);
             return (R)response.Response;
         }
@@ -66,7 +68,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-             
+
         }
 
         private async Task Connect()
