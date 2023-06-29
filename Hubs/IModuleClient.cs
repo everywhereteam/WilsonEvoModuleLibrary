@@ -9,7 +9,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 {
     public interface IModuleClient
     {
-        public Task<ServiceResponse?> Execute(ServiceRequest request, CancellationToken token);
-        public Task<byte[]> ModuleConfiguration(CancellationToken token);
+        public Task<ServiceResponse?> Execute(ServiceRequest request);
+        public Task<byte[]> ModuleConfiguration();
     }
 }

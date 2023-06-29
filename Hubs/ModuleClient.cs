@@ -30,10 +30,10 @@ namespace WilsonEvoModuleLibrary.Hubs
             await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
         }
 
-        public async Task<R> Start<R>(object channel, SessionData session, CancellationToken token = default)
+        public async Task<R> Start<R>(object channel, SessionData session)
         {
             session.ChannelType = channel.GetType().AssemblyQualifiedName ?? string.Empty;
-            var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
+            var response = await _connection.InvokeAsync<SessionData>("Start", session);
             return (R)response.Response;
         }
 
@@ -47,7 +47,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _mapper.ExecuteService(request);
         }
 
-        public Task<byte[]> ModuleConfiguration(CancellationToken token)
+        public Task<byte[]> ModuleConfiguration()
         {
 
             //TODO
