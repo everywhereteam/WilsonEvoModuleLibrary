@@ -42,7 +42,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
         }
 
-        public async Task<ServiceResponse> Execute(ServiceRequest request, CancellationToken token)
+        public async Task<ServiceResponse> Execute(ServiceRequest request)
         {
             return await _mapper.ExecuteService(request);
         }
@@ -58,21 +58,48 @@ namespace WilsonEvoModuleLibrary.Hubs
         {
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
-            _connection.On<ServiceRequest, CancellationToken, ServiceResponse>("Execute", Execute);
-            _connection.On<CancellationToken, byte[]>("ModuleConfiguration", ModuleConfiguration);
+            _connection.On<ServiceRequest, ServiceResponse>("Execute", Execute);
+            _connection.On<byte[]>("ModuleConfiguration", ModuleConfiguration);
             _connection.Closed += Reconnect;
 
-            await _connection.StartAsync(cancellationToken);
+            int retryCount = 0;
+
+            while (true)
+            {
+                try
+                {
+                    await _connection.StartAsync(cancellationToken);
+                    return; // If successful, return from the method
+                }
+                catch (Exception e)
+                {
+
+                    retryCount++;
+                    Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}.");
+                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                }
+            }
+            
 
         }
 
         private async Task Reconnect(Exception? error)
         {
             var errorMsg = error == null ? string.Empty : error.Message;
-            _logger.LogWarning("[Wilson] Reconnecting.. {errorMsg}", errorMsg);
-            await Task.Delay(new Random().Next(0, 5) * 1000);
-            if (_connection != null)
+            Console.WriteLine($"Error occurred: {errorMsg}. Reconnecting...");
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            if (_connection.State == HubConnectionState.Connected || _connection.State == HubConnectionState.Connecting)
+            {
+                return;
+            }
+            try
+            {
                 await _connection.StartAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error when trying to reconnect: {e.Message}");
+            }
         }
 
 
