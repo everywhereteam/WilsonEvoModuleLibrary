@@ -1,11 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
+using BlazorDynamicFormGenerator;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Interfaces;
 using WilsonEvoModuleLibrary.Utility;
+using static System.Net.Mime.MediaTypeNames;
+using System.Linq;
+using ReadOnlyAttribute = BlazorDynamicFormGenerator.ReadOnlyAttribute;
 
 namespace WilsonEvoModuleLibrary.Services;
 
@@ -25,6 +32,43 @@ public sealed class NodeServiceMapper
             AddService(serviceTypes);
         }
     }
+
+    public Dictionary<string,ModuleNodeDefinition> GetDefinitions()
+    {
+        var result = new Dictionary<string,ModuleNodeDefinition>();
+        foreach (var  service in _services)
+        {
+            result.Add(service.Value.Name, GetDefinition(service.Value));
+        }
+
+        return result;
+    }
+
+    private ModuleNodeDefinition GetDefinition(Type type)
+    {
+        ModuleNodeDefinition definition = new ModuleNodeDefinition();
+        foreach (PropertyInfo property in type.GetProperties())
+        {
+            DataTypeAttribute dataTypeAttribute = (DataTypeAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(DataTypeAttribute), false)).First<object>();
+            DisplayAttribute displayAttribute = (DisplayAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(DisplayAttribute), false)).FirstOrDefault<object>();
+            bool flag = (BlazorDynamicFormGenerator.ReadOnlyAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(ReadOnlyAttribute), false)).FirstOrDefault<object>() != null;
+            DefaultValueAttribute defaultValueAttribute = (DefaultValueAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(DefaultValueAttribute), false)).FirstOrDefault<object>();
+            List<ValidationAttribute> list = property.GetCustomAttributes(typeof(ValidationAttribute), false).Cast<ValidationAttribute>().ToList<ValidationAttribute>();
+            ModuleNodePropertyDefinition propertyDefinition = new ModuleNodePropertyDefinition()
+            {
+                Name = property.Name,
+                DisplayName = displayAttribute?.Name,
+                DataType = dataTypeAttribute?.DataType,
+                CustomDataType = dataTypeAttribute?.CustomDataType,
+                ValidationRules = list,
+                ReadOnly = flag,
+                DefaultValue = defaultValueAttribute?.Value
+            };
+            definition.PropertyDefinitions.Add(propertyDefinition);
+        }
+        return definition;
+    }
+
 
     public async Task<ServiceResponse> ExecuteService(ServiceRequest request)
     {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlazorDynamicFormGenerator;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,6 @@ namespace WilsonEvoModuleLibrary.Hubs
     public interface IModuleClient
     {
         public Task<ServiceResponse?> Execute(ServiceRequest request);
-        public Task<byte[]> ModuleConfiguration();
+        public Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration();
     }
 }

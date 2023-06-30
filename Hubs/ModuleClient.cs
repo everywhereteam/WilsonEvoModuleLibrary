@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using BlazorDynamicFormGenerator;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -31,7 +33,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
             _connection.On<ServiceRequest, ServiceResponse>("Execute", Execute);
-            _connection.On<byte[]>("ModuleConfiguration", ModuleConfiguration);
+            _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
             _connection.Closed += Reconnect;
         }
 
@@ -59,11 +61,9 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _mapper.ExecuteService(request);
         }
 
-        public Task<byte[]> ModuleConfiguration()
+        public Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration()
         {
-
-            //TODO
-            return null;
+            return Task.FromResult(_mapper.GetDefinitions());
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
