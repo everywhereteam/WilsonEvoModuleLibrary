@@ -61,9 +61,9 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _mapper.ExecuteService(request);
         }
 
-        public Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration()
+        public async Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration()
         {
-            return Task.FromResult(_mapper.GetDefinitions());
+            return _mapper.GetDefinitions();
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
