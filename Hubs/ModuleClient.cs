@@ -33,7 +33,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
             _connection.On<ServiceRequest, ServiceResponse>("Run", Run);
-            _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
+            _connection.On<Modelsconfiguration>("ModuleConfiguration", ModuleConfiguration);
            // _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
             _connection.Closed += Reconnect;
         }
@@ -57,14 +57,16 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
         }
 
-        public async Task<ServiceResponse> Run(ServiceRequest request)
+        public Task<ServiceResponse> Run(ServiceRequest request)
         {
-            return await _mapper.ExecuteService(request);
+            return _mapper.ExecuteService(request);
         }
 
-        public Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration()
+        public Task<Modelsconfiguration> ModuleConfiguration()
         {
-            return Task.FromResult(_mapper.GetDefinitions());
+            var response = new Modelsconfiguration();
+            response.Definitions = _mapper.GetDefinitions();
+            return Task.FromResult(response);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)

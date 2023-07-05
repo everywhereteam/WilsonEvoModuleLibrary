@@ -11,6 +11,6 @@ namespace WilsonEvoModuleLibrary.Hubs
     public interface IModuleClient
     {
         public Task<ServiceResponse> Run(ServiceRequest request);
-        public Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration();
+        public Task<Modelsconfiguration> ModuleConfiguration();
     }
 }
