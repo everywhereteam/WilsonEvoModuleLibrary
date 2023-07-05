@@ -34,6 +34,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
             _connection.On<ServiceRequest, ServiceResponse>("Execute", Execute);
             _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
+           // _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
             _connection.Closed += Reconnect;
         }
 
@@ -61,9 +62,9 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _mapper.ExecuteService(request);
         }
 
-        public async Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration()
+        public Task<Dictionary<string, ModuleNodeDefinition>> ModuleConfiguration()
         {
-            return _mapper.GetDefinitions();
+            return Task.FromResult(_mapper.GetDefinitions());
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
