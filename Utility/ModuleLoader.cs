@@ -33,7 +33,7 @@ public static class ModuleLoader
             {
                 options.Headers.Add("api-key", apiKey);
             }));                                    
-
+        
         services.AddSingleton<ModuleClient>();
         services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
         services.AddHostedService<ModuleClient>(provider => provider.GetRequiredService<ModuleClient>());

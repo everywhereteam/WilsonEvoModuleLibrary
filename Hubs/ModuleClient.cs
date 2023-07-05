@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BlazorDynamicFormGenerator;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -28,14 +29,16 @@ namespace WilsonEvoModuleLibrary.Hubs
             _logger = logger;
             _hostApplicationLifetime = hostApplicationLifetime;
 
-            _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
+           
 
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
-            _connection.On<ServiceRequest, ServiceResponse>("Run", Run);
-            _connection.On<Modelsconfiguration>("ModuleConfiguration", ModuleConfiguration);
+            _connection.On<ServiceRequest>("Run", Run);
+            _connection.On("ModuleConfiguration", ModuleConfiguration);
            // _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
             _connection.Closed += Reconnect;
+
+            _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
         public async Task Log(LogLevel logLevel, EventId eventId, string? state = null, string? sessionId = null, Exception? exception = null, CancellationToken token = default)
@@ -57,16 +60,18 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
         }
 
-        public Task<ServiceResponse> Run(ServiceRequest request)
+        public async Task Run(ServiceRequest request)
         {
-            return _mapper.ExecuteService(request);
+            var result = await _mapper.ExecuteService(request);
+            await _connection.InvokeAsync(nameof(IModuleServer.Run), result);
         }
 
-        public Task<Modelsconfiguration> ModuleConfiguration()
+        public async Task ModuleConfiguration()
         {
             var response = new Modelsconfiguration();
             response.Definitions = _mapper.GetDefinitions();
-            return Task.FromResult(response);
+            await _connection.InvokeAsync(nameof(IModuleServer.ModuleConfiguration), response);
+         
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)

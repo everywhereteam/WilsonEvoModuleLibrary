@@ -10,7 +10,13 @@ namespace WilsonEvoModuleLibrary.Hubs
 {
     public interface IModuleClient
     {
-        public Task<ServiceResponse> Run(ServiceRequest request);
-        public Task<Modelsconfiguration> ModuleConfiguration();
+        public Task Run(ServiceRequest request);
+        public Task ModuleConfiguration();
+    }
+
+    public interface IModuleServer
+    {
+        public Task Run(ServiceResponse response);
+        public Task ModuleConfiguration(Modelsconfiguration configuration);
     }
 }
