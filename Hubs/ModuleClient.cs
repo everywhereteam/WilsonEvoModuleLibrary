@@ -57,7 +57,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
         }
 
-        public async Task<ServiceResponse?> Execute(ServiceRequest request)
+        public async Task<ServiceResponse> Execute(ServiceRequest request)
         {
             return await _mapper.ExecuteService(request);
         }
