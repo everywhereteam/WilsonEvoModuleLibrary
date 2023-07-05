@@ -32,7 +32,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
-            _connection.On<ServiceRequest, ServiceResponse>("Execute", Execute);
+            _connection.On<ServiceRequest, ServiceResponse>("Run", Run);
             _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
            // _connection.On<Dictionary<string, ModuleNodeDefinition>>("ModuleConfiguration", ModuleConfiguration);
             _connection.Closed += Reconnect;
@@ -57,7 +57,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
         }
 
-        public async Task<ServiceResponse> Execute(ServiceRequest request)
+        public async Task<ServiceResponse> Run(ServiceRequest request)
         {
             return await _mapper.ExecuteService(request);
         }
