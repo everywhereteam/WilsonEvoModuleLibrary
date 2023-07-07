@@ -30,8 +30,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
             _connection.On(nameof(ModuleConfiguration), ModuleConfiguration);                                        
 
-            _connection.Closed += Reconnect;
-
+            _connection.Closed += Reconnect;    
             _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
@@ -59,11 +58,11 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _mapper.ExecuteService(request);
         }
 
-        public Task<Modelsconfiguration> ModuleConfiguration()
+        public async Task<Modelsconfiguration> ModuleConfiguration()
         {
             var response = new Modelsconfiguration();
             response.Definitions = _mapper.GetDefinitions();
-            return Task.FromResult(response);
+            return response;
 
         }
 
