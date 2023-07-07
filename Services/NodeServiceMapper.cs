@@ -38,7 +38,9 @@ public sealed class NodeServiceMapper
         var result = new Dictionary<string,ModuleNodeDefinition>();
         foreach (var  service in _services)
         {
-            result.Add(service.Value.Name, GetDefinition(service.Value));
+            var interfaceService = ModuleLoader.GetNodeServiceInterface(service.Value);
+            var args = interfaceService.GenericTypeArguments;
+            result.Add(args[0].FullName, GetDefinition(service.Value));
         }
 
         return result;
