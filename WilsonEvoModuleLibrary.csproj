@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageProjectUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</PackageProjectUrl>
-	<VersionPrefix>1.0.21</VersionPrefix>
+	<VersionPrefix>1.0.22</VersionPrefix>
     <PackageTags>Wilson;</PackageTags>
     <RepositoryUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
