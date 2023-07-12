@@ -79,9 +79,7 @@ public sealed class NodeServiceMapper
         var response = new ServiceResponse();
         var output = "ok";
         var type = Type.GetType(session.ChannelType);
-        var serviceType = GetService(node.GetType(), type);
-        if (_servicesProvider.GetService(serviceType) is null)
-            throw new Exception("missing service");
+        var serviceType = GetService(node.GetType(), type); 
         var service = serviceType is not null ? _servicesProvider.GetService(ModuleLoader.GetNodeServiceInterface(serviceType)) : null;
         if (service is IExecutionService syncService)
         {
