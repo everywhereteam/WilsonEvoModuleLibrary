@@ -40,7 +40,7 @@ public sealed class NodeServiceMapper
         {
             var interfaceService = ModuleLoader.GetNodeServiceInterface(service.Value);
             var args = interfaceService.GenericTypeArguments;
-            result.Add(args[0].FullName, GetDefinition(service.Value));
+            result.Add(args[0].Name, GetDefinition(service.Value));
         }
 
         return result;
