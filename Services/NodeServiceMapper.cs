@@ -128,7 +128,7 @@ public sealed class NodeServiceMapper
 
             if (lookup == ulong.MaxValue) throw new Exception("NodeServiceMapper, error lookup id is invalid");
 
-            if (!_services.TryAdd(lookup, interfaceService))
+            if (!_services.TryAdd(lookup, type))
                 throw new Exception("NodeServiceMapper, possible collision on service type");
         }
     }
