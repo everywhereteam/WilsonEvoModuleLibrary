@@ -44,6 +44,7 @@ namespace WilsonEvoModuleLibrary
             using var ms = new MemoryStream(data);
             using var reader = new BsonDataReader(ms);
             var serializer = new JsonSerializer();
+            serializer.ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor;
             return serializer.Deserialize<T>(reader);
         }
     }
