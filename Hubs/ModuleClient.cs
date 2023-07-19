@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Services;
 
 namespace WilsonEvoModuleLibrary.Hubs
@@ -39,19 +40,19 @@ namespace WilsonEvoModuleLibrary.Hubs
             await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
         }
 
-        public async Task<R?> Start<R>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default)
+        public async Task<R> Start<R>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default)
         {
             session ??= new SessionData();
             session.ChannelType = channel.GetType().AssemblyQualifiedName ?? string.Empty;
             session.CurrentShortUrl = shortUrl;
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-            return response.Deserialize<R>(response.Response);
+            return (response.Response as JObject).ToObject<R>();
         }
 
         public async Task<R?> Next<R>(string sessionId, object response, CancellationToken token = default)
         {
             var result =  await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
-            return result.Deserialize<R>(result.Response);
+            return (result.Response as JObject).ToObject<R>();
         }
 
         public async Task<ServiceResponse> Execute(ServiceRequest request)
