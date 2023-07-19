@@ -9,7 +9,7 @@ namespace WilsonEvoModuleLibrary
         {
         }
 
-        public SessionData(string sessionId, int processCode, dynamic request = null)
+        public SessionData(string sessionId, int processCode, JObject request = null)
         {
             Request = request;
             SessionId = sessionId;

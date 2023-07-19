@@ -45,13 +45,13 @@ namespace WilsonEvoModuleLibrary.Hubs
             session.ChannelType = channel.GetType().AssemblyQualifiedName ?? string.Empty;
             session.CurrentShortUrl = shortUrl;
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-            return response.Response.ToObject<R>();
+            return response.Response;
         }
 
         public async Task<R> Next<R>(string sessionId, object response, CancellationToken token = default)
         {
             var result =  await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
-            return result.Response.ToObject<R>();
+            return result.Response;
         }
 
         public async Task<ServiceResponse> Execute(ServiceRequest request)
