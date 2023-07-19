@@ -39,19 +39,19 @@ namespace WilsonEvoModuleLibrary.Hubs
             await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
         }
 
-        public async Task<R> Start<R>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default)
+        public async Task<R?> Start<R>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default)
         {
             session ??= new SessionData();
             session.ChannelType = channel.GetType().AssemblyQualifiedName ?? string.Empty;
             session.CurrentShortUrl = shortUrl;
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-            return response.Response;
+            return response.Deserialize<R>(response.Response);
         }
 
-        public async Task<R> Next<R>(string sessionId, object response, CancellationToken token = default)
+        public async Task<R?> Next<R>(string sessionId, object response, CancellationToken token = default)
         {
             var result =  await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
-            return result.Response;
+            return result.Deserialize<R>(result.Response);
         }
 
         public async Task<ServiceResponse> Execute(ServiceRequest request)
