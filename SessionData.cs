@@ -27,7 +27,7 @@ namespace WilsonEvoModuleLibrary
         public string ChannelType { get; set; }
         public string Output { get; set; }
         public dynamic Request { get; set; }
-        public dynamic Response { get; set; }
+        public JObject Response { get; set; }
         public string CurrentNodeId { get; set; }
         public string CurrentShortUrl { get; set; }
         public string CurrentOutput { get; set; }
