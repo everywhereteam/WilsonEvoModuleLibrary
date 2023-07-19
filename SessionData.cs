@@ -4,6 +4,8 @@ using Newtonsoft.Json.Bson;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System.Reflection;
 
 namespace WilsonEvoModuleLibrary
 {
@@ -35,6 +37,7 @@ namespace WilsonEvoModuleLibrary
             using var ms = new MemoryStream();
             using var writer = new BsonDataWriter(ms);
             var serializer = new JsonSerializer();
+            serializer.ContractResolver = new PrivateResolver();
             serializer.ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor;
             serializer.Serialize(writer, data);
             return ms.ToArray();
@@ -46,8 +49,23 @@ namespace WilsonEvoModuleLibrary
             using var reader = new BsonDataReader(ms);
             var serializer = new JsonSerializer();
             serializer.ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor;
-            
+            serializer.ContractResolver = new PrivateResolver();
             return serializer.Deserialize<T>(reader);
+        }
+
+        public class PrivateResolver : DefaultContractResolver
+        {
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            {
+                var prop = base.CreateProperty(member, memberSerialization);
+                if (!prop.Writable)
+                {
+                    var property = member as PropertyInfo;
+                    var hasPrivateSetter = property?.GetSetMethod(true) != null;
+                    prop.Writable = hasPrivateSetter;
+                }
+                return prop;
+            }
         }
     }
 }
