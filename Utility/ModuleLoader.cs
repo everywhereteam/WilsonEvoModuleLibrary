@@ -32,7 +32,7 @@ public static class ModuleLoader
         services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
             {
                 options.Headers.Add("api-key", apiKey);
-            }));                                    
+            }).AddNewtonsoftJsonProtocol());                                    
         
         services.AddSingleton<ModuleClient>();
         services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
