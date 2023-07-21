@@ -6,7 +6,7 @@
     <LangVersion>preview</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageProjectUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</PackageProjectUrl>
-	<VersionPrefix>1.0.44</VersionPrefix>
+	<VersionPrefix>1.0.45</VersionPrefix>
     <PackageTags>Wilson;</PackageTags>
     <RepositoryUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <PackageReference Include="BlazorDynamicFormGenerator" Version="1.0.5" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="8.0.0-preview.6.23329.11" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
