@@ -33,51 +33,6 @@ namespace WilsonEvoModuleLibrary
         public bool ContinueExecution { get; set; } = true;
         public Dictionary<string, object> VarData { get; set; } = new Dictionary<string, object>();
 
-        public byte[] Serialize<T>(T data)
-        {
-            //using var ms = new MemoryStream();
-            //using var writer = new BsonDataWriter(ms);
-            //var serializer = new JsonSerializer();
-            //serializer.ContractResolver = new PrivateResolver();
-            //serializer.ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor;
-            //serializer.Serialize(writer, data);
-            //return ms.ToArray();
-            return Encoding.Default.GetBytes(JsonConvert.SerializeObject(data, new JsonSerializerSettings()
-            {
-                ContractResolver = new PrivateResolver(),
-                ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
-            }));
-        }
-
-        public T? Deserialize<T>(byte[] data)
-        {
-            //using var ms = new MemoryStream(data);
-            //using var reader = new BsonDataReader(ms);
-            //var serializer = new JsonSerializer();
-            //serializer.ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor;
-            //serializer.ContractResolver = new PrivateResolver();
-            //return serializer.Deserialize<T>(reader);
-
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Encoding.Default.GetString(data), new JsonSerializerSettings()
-            {
-                ContractResolver = new PrivateResolver(),
-                ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
-            });
-        }
-
-        public class PrivateResolver : DefaultContractResolver
-        {
-            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
-            {
-                var prop = base.CreateProperty(member, memberSerialization);
-                if (!prop.Writable)
-                {
-                    var property = member as PropertyInfo;
-                    var hasPrivateSetter = property?.GetSetMethod(true) != null;
-                    prop.Writable = hasPrivateSetter;
-                }
-                return prop;
-            }
-        }
+        
     }
 }
