@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Services;
+using static System.Collections.Specialized.BitVector32;
 
 namespace WilsonEvoModuleLibrary.Hubs
 {
@@ -28,9 +29,8 @@ namespace WilsonEvoModuleLibrary.Hubs
 
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
-            _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
-            _connection.On(nameof(ModuleConfiguration), ModuleConfiguration);                                        
-
+            _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);                                      
+                          
             _connection.Closed += Reconnect;    
             _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
@@ -60,14 +60,6 @@ namespace WilsonEvoModuleLibrary.Hubs
             return await _mapper.ExecuteService(request);
         }
 
-        public async Task<Modelsconfiguration> ModuleConfiguration()
-        {
-            var response = new Modelsconfiguration();
-            response.Definitions = _mapper.GetDefinitions();
-            return response;
-
-        }
-
         public async Task StartAsync(CancellationToken cancellationToken)
         {
 
@@ -82,6 +74,9 @@ namespace WilsonEvoModuleLibrary.Hubs
                 try
                 {
                     await _connection.StartAsync();
+                    var response = new Modelsconfiguration();
+                    response.Definitions = _mapper.GetDefinitions();
+                    await _connection.InvokeAsync("RegisterServices", response);
                     break;
                 }
                 catch (Exception e)
