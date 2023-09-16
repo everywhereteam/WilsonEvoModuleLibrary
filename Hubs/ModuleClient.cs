@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;      
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using WilsonEvoModuleLibrary.Services;
-using static System.Collections.Specialized.BitVector32;
+using Microsoft.Extensions.Logging;           
+using WilsonEvoModuleLibrary.Entities;
+using WilsonEvoModuleLibrary.Services;                      
 
 namespace WilsonEvoModuleLibrary.Hubs
 {
@@ -17,21 +16,22 @@ namespace WilsonEvoModuleLibrary.Hubs
         private readonly NodeServiceMapper _mapper;
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly ModelsConfiguration _configuration;
 
-        public ModuleClient(ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
+        public ModuleClient(ModelsConfiguration configuration, ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
         {
             _hubConnectionBuilder = hubConnectionBuilder;
             _mapper = mapper;
             _logger = logger;
             _hostApplicationLifetime = hostApplicationLifetime;
-
+            _configuration = configuration;
 
 
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
-            _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);                                      
-                          
-            _connection.Closed += Reconnect;    
+            _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
+
+            _connection.Closed += Reconnect;
             _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
@@ -51,7 +51,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
         public async Task<dynamic> Next(string sessionId, object response, CancellationToken token = default)
         {
-            var result =  await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
+            var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
             return result.Response;
         }
 
@@ -73,10 +73,8 @@ namespace WilsonEvoModuleLibrary.Hubs
             {
                 try
                 {
-                    await _connection.StartAsync();
-                    var response = new Modelsconfiguration();
-                    response.Definitions = _mapper.GetDefinitions();
-                    await _connection.InvokeAsync("RegisterServices", response);
+                    await _connection.StartAsync();                   
+                    await _connection.InvokeAsync("RegisterServices", _configuration);
                     break;
                 }
                 catch (Exception e)

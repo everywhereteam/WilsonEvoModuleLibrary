@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;  
+using Microsoft.Extensions.DependencyInjection;
+using WilsonEvoModuleLibrary.Attributes;
+using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Hubs;
 using WilsonEvoModuleLibrary.Interfaces;
 using WilsonEvoModuleLibrary.Services;
@@ -29,11 +31,12 @@ public static class ModuleLoader
 
 ");
         services.LoadNodeServices();
+        services.LoadNodeConfiguration();
         services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
             {
                 options.Headers.Add("api-key", apiKey);
-            }).AddNewtonsoftJsonProtocol());                                    
-        
+            }).AddNewtonsoftJsonProtocol());
+
         services.AddSingleton<ModuleClient>();
         services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
         services.AddHostedService<ModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
@@ -42,17 +45,40 @@ public static class ModuleLoader
         services.AddSingleton<NodeServiceMapper>();
     }
 
-    public static void LoadNodeServices(this IServiceCollection services)
+    static void LoadNodeConfiguration(this IServiceCollection services)
+    {
+        WriteCoolDebug("Loading configuration...");
+        var configuration = new ModelsConfiguration();
+
+        foreach (var type in GetTypesWithAttribute<TaskAttribute>())
+        {
+            var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
+
+            configuration.Tasks.Add(type.FullName,task);  
+        }
+
+        foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>())
+        {
+            configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
+                               //m.. shit?
+            
+        }
+
+
+        services.ConfigureOptions(configuration);
+    }
+
+    static void LoadNodeServices(this IServiceCollection services)
     {
         List<Type> types = new();
         var currentDomain = AppDomain.CurrentDomain;
         var assemblies = currentDomain.GetAssemblies();
+
         foreach (var assembly in assemblies) types.AddRange(GetNodeService(assembly));
 
-
-
-        WriteCoolDebug("Loading the services container:");
+        WriteCoolDebug("Loading service...");
         foreach (var type in types)
+        {
             try
             {
                 var serviceInterface = GetNodeServiceInterface(type);
@@ -64,6 +90,7 @@ public static class ModuleLoader
                 WriteCoolDebug($"- (...){type.Name}", " Error", ConsoleColor.DarkRed);
                 throw;
             }
+        }
     }
 
     private static void WriteCoolDebug(string msg, string status = "", ConsoleColor color = ConsoleColor.White)
@@ -77,27 +104,33 @@ public static class ModuleLoader
         Console.ResetColor();
     }
 
-    private static bool CheckType(Type type)
-    {
-        return type == typeof(NodeService<>) || type == typeof(NodeServices<,>) || type == typeof(AsyncNodeService<>) ||
-               type == typeof(AsyncNodeServices<,>);
-    }
+    private static readonly Type[] ServiceType = { typeof(NodeService<>), typeof(NodeServices<,>), typeof(AsyncNodeService<>), typeof(AsyncNodeServices<,>) };
+    private static readonly Type[] ServiceInterfaceType = { typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>) };
 
-    private static bool CheckInterfaceType(Type type)
-    {
-        return type == typeof(INodeService<>) || type == typeof(INodeServices<,>) ||
-               type == typeof(IAsyncNodeService<>) || type == typeof(IAsyncNodeServices<,>);
-    }
 
+    public static IEnumerable<Type> GetTypesWithAttribute<TAttribute>()
+        where TAttribute : Attribute
+    {
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            foreach (Type type in assembly.GetTypes())
+            {
+                if (type.GetCustomAttributes(typeof(TAttribute), false).Length > 0)
+                {
+                    yield return type;
+                }
+            }
+        }
+    }
     public static IEnumerable<Type> GetNodeService(Assembly assembly)
     {
         return assembly.GetTypes().Where(
             t => t.IsClass && !t.IsAbstract && t.BaseType != null && t.BaseType.IsGenericType &&
-                 CheckType(t.BaseType.GetGenericTypeDefinition()));
+                 ServiceType.Contains(t.BaseType.GetGenericTypeDefinition()));
     }
 
     public static Type GetNodeServiceInterface(Type type)
     {
-        return type.GetInterfaces().First(i => i.IsGenericType && CheckInterfaceType(i.GetGenericTypeDefinition()));
+        return type.GetInterfaces().First(i => i.IsGenericType && ServiceInterfaceType.Contains(i.GetGenericTypeDefinition()));
     }
 }

@@ -6,7 +6,7 @@
     <LangVersion>preview</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageProjectUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</PackageProjectUrl>
-	<VersionPrefix>1.0.48</VersionPrefix>
+	<VersionPrefix>1.0.49</VersionPrefix>
     <PackageTags>Wilson;</PackageTags>
     <RepositoryUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -20,10 +20,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Attributes\Property\" />
   </ItemGroup>
 
 </Project>

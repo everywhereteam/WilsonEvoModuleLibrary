@@ -1,14 +1,17 @@
 ﻿using System;
+using BlazorDynamicFormGenerator;
 
 namespace WilsonEvoModuleLibrary.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public class ServiceProviderConfigurationAttribute : Attribute
+public class TaskProviderAttribute : Attribute
 {
-    public ServiceProviderConfigurationAttribute(string name)
+    public TaskProviderAttribute(string name)
     {
         ServiceName = name;
     }
 
     public string ServiceName { get; set; }
+
+    public ModuleNodeDefinition Definition { get; set; }
 }

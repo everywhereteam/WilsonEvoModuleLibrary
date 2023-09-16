@@ -3,7 +3,7 @@ using WilsonEvoModuleLibrary.Interfaces;
 
 namespace WilsonEvoModuleLibrary.CommonNodes;
 
-[TaskDefinition("Input Intent", "Categoria.INTENT", "NotFound", "MaxExc", "ok", "error")]
+[Task("Input Intent", "Categoria.INTENT", "NotFound", "MaxExc", "ok", "error")]
 public class InputProcessTask : INode
 {
     public string MessageConfirmation { get; set; }

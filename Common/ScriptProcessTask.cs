@@ -4,7 +4,7 @@ using WilsonEvoModuleLibrary.Interfaces;
 
 namespace WilsonEvoModuleLibrary.CommonNodes;
 
-[TaskDefinition("Script", "Advanced", OutputDefault, OutputError)]
+[Task("Script", "Advanced", OutputDefault, OutputError)]
 public class ScriptProcessTask : INode
 {
     public const string OutputDefault = "default";
