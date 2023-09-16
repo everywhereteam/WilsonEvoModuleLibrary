@@ -65,7 +65,7 @@ public static class ModuleLoader
         }
 
 
-        services.ConfigureOptions(configuration);
+        services.AddSingleton(configuration);
     }
 
     static void LoadNodeServices(this IServiceCollection services)
