@@ -3,9 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;           
+using Microsoft.Extensions.Logging;
 using WilsonEvoModuleLibrary.Entities;
-using WilsonEvoModuleLibrary.Services;                      
+using WilsonEvoModuleLibrary.Services;
 
 namespace WilsonEvoModuleLibrary.Hubs
 {

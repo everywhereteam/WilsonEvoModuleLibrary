@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json.Bson;
-using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using System.Reflection;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace WilsonEvoModuleLibrary
+namespace WilsonEvoModuleLibrary.Entities
 {
     public class SessionData
     {
@@ -31,8 +23,10 @@ namespace WilsonEvoModuleLibrary
         public string CurrentPoolId { get; set; }
         public bool WaitingCallback { get; set; } = false;
         public bool ContinueExecution { get; set; } = true;
+        public bool IsFaulted { get; set; } = false;
+        public string Exception { get; set; } = string.Empty;
         public Dictionary<string, object> VarData { get; set; } = new Dictionary<string, object>();
 
-        
+
     }
 }

@@ -1,10 +1,9 @@
 ﻿using WilsonEvoModuleLibrary.Attributes;
-using WilsonEvoModuleLibrary.Interfaces;
 
-namespace WilsonEvoModuleLibrary.CommonNodes;
+namespace WilsonEvoModuleLibrary.Common;
 
 [Task("Input Intent", "Categoria.INTENT", "NotFound", "MaxExc", "ok", "error")]
-public class InputProcessTask : INode
+public class InputProcessTask
 {
     public string MessageConfirmation { get; set; }
 

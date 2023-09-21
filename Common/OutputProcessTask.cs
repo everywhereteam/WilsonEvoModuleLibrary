@@ -1,8 +1,7 @@
-﻿using WilsonEvoModuleLibrary.Interfaces;
+﻿
+namespace WilsonEvoModuleLibrary.Common;
 
-namespace WilsonEvoModuleLibrary.CommonNodes;
-
-public class OutputProcessTask : INode
+public class OutputProcessTask
 {                                               
     public string Message { get; set; }
 }

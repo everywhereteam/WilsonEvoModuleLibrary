@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using WilsonEvoModuleLibrary.Attributes;
-using WilsonEvoModuleLibrary.Interfaces;
 
-namespace WilsonEvoModuleLibrary.CommonNodes;
+namespace WilsonEvoModuleLibrary.Common;
 
 [Task("Script", "Advanced", OutputDefault, OutputError)]
-public class ScriptProcessTask : INode
+public class ScriptProcessTask 
 {
     public const string OutputDefault = "default";
     public const string OutputError = "error";

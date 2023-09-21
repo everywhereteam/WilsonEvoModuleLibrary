@@ -7,8 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Hubs;
-using WilsonEvoModuleLibrary.Interfaces;
 using WilsonEvoModuleLibrary.Services;
+using WilsonEvoModuleLibrary.Services.Core;
+using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
@@ -47,21 +48,23 @@ public static class ModuleLoader
 
     static void LoadNodeConfiguration(this IServiceCollection services)
     {
-        WriteCoolDebug("Loading configuration...");
+        
         var configuration = new ModelsConfiguration();
-
+        WriteCoolDebug("Loading task definitions...");
         foreach (var type in GetTypesWithAttribute<TaskAttribute>())
         {
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
 
-            configuration.Tasks.Add(type.FullName,task);  
-        }
+            configuration.Tasks.Add(type.FullName,task);
 
+            WriteCoolDebug($"- {type.Name}", " Loaded", ConsoleColor.Green);
+        }
+        WriteCoolDebug("Loading provider configuration...");
         foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>())
         {
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
-                               //m.. shit?
-            
+            //m.. shit?
+            WriteCoolDebug($"- {type.Name}", " Loaded", ConsoleColor.Green);
         }
 
 

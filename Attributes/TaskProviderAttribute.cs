@@ -6,12 +6,9 @@ namespace WilsonEvoModuleLibrary.Attributes;
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public class TaskProviderAttribute : Attribute
 {
-    public TaskProviderAttribute(string name)
-    {
-        ServiceName = name;
+    public TaskProviderAttribute()
+    {                           
     }
-
-    public string ServiceName { get; set; }
 
     public ModuleNodeDefinition Definition { get; set; }
 }

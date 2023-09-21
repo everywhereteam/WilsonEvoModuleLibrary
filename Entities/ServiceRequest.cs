@@ -1,0 +1,17 @@
+﻿namespace WilsonEvoModuleLibrary.Entities
+{
+    public class ServiceRequest
+    {
+        public SessionData SessionData { get; set; }
+        public byte[] NodeData { get; set; }
+        public string Type { get; set; }
+
+        public ServiceRequest() { }
+        public ServiceRequest(SessionData sessionData, byte[] nodeData, string type)
+        {
+            SessionData = sessionData;
+            NodeData = nodeData;
+            Type = type;
+        }
+    }
+}

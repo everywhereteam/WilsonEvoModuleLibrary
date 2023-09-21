@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 using BlazorDynamicFormGenerator;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
-using WilsonEvoModuleLibrary.Interfaces;
 using WilsonEvoModuleLibrary.Utility;
-using static System.Net.Mime.MediaTypeNames;
 using System.Linq;
 using ReadOnlyAttribute = BlazorDynamicFormGenerator.ReadOnlyAttribute;
+using WilsonEvoModuleLibrary.Entities;
+using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Services;
 
@@ -102,7 +102,7 @@ public sealed class NodeServiceMapper
         return response;
     }
 
-    private async Task<INode?> ReadSessionData(ServiceRequest request)
+    private async Task<object?> ReadSessionData(ServiceRequest request)
     {                      
         var ms = new MemoryStream(request.NodeData);
 
@@ -110,7 +110,7 @@ public sealed class NodeServiceMapper
         var o = (JObject)await JToken.ReadFromAsync(reader);
         var getType = Type.GetType(request.Type);
         if (getType != null) 
-            return (INode)o.ToObject(getType);
+            return o.ToObject(getType);
 
         return null;   
     }
