@@ -48,55 +48,46 @@ public static class ModuleLoader
 
     static void LoadNodeConfiguration(this IServiceCollection services)
     {
-        
+
         var configuration = new ModelsConfiguration();
         WriteCoolDebug("Loading task definitions...");
         foreach (var type in GetTypesWithAttribute<TaskAttribute>())
         {
-            if(type.Assembly.Equals(Assembly.GetExecutingAssembly()))
-                continue;
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
 
-            configuration.Tasks.Add(type.FullName,task);
+            configuration.Tasks.Add(type.FullName, task);
 
             WriteCoolDebug($"- {type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
         }
         WriteCoolDebug("Loading provider configuration...");
         foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>())
         {
-            if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
-                continue;
+            //if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
+            //    continue;
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
-            //m.. shit?
             WriteCoolDebug($"- {type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
-        }
-
-
+        }   
         services.AddSingleton(configuration);
     }
 
-    static void LoadNodeServices(this IServiceCollection services)
+    static void LoadNodeServices(this IServiceCollection services, Assembly? assembly = null)
     {
-        List<Type> types = new();
-        var currentDomain = AppDomain.CurrentDomain;
-        var assemblies = currentDomain.GetAssemblies();
-        
-        foreach (var assembly in assemblies) types.AddRange(GetNodeService(assembly));
+        assembly ??= Assembly.GetCallingAssembly();
 
         WriteCoolDebug("Loading service...");
-        foreach (var type in types)
+        foreach (var type in GetNodeService(assembly))
         {
-            if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
-                continue;
+            //if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
+            //    continue;
             try
             {
                 var serviceInterface = GetNodeServiceInterface(type);
                 services.AddTransient(serviceInterface, type);
-                WriteCoolDebug($"- ({serviceInterface.Name}){type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
+                WriteCoolDebug($"   -{type.Name} {type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
             }
             catch (Exception)
             {
-                WriteCoolDebug($"- (...){type.Name}", " Error", ConsoleColor.DarkRed);
+                WriteCoolDebug($"   -{type.Name}", " Error", ConsoleColor.DarkRed);
                 throw;
             }
         }
@@ -117,24 +108,21 @@ public static class ModuleLoader
     private static readonly Type[] ServiceInterfaceType = { typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>) };
 
 
-    public static IEnumerable<Type> GetTypesWithAttribute<TAttribute>()
-        where TAttribute : Attribute
+    public static IEnumerable<Type> GetTypesWithAttribute<TAttribute>(Assembly? assembly = null) where TAttribute : Attribute
     {
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        assembly ??= Assembly.GetCallingAssembly();
+        foreach (var type in assembly.GetTypes())
         {
-            foreach (Type type in assembly.GetTypes())
+            if (type.GetCustomAttributes(typeof(TAttribute), false).Length > 0)
             {
-                if (type.GetCustomAttributes(typeof(TAttribute), false).Length > 0)
-                {
-                    yield return type;
-                }
+                yield return type;
             }
         }
     }
     public static IEnumerable<Type> GetNodeService(Assembly assembly)
     {
         return assembly.GetTypes().Where(
-            t => t.IsClass && !t.IsAbstract && t.BaseType != null && t.BaseType.IsGenericType &&
+            t => t.IsClass && !t.IsAbstract && t.BaseType is { IsGenericType: true } &&
                  ServiceType.Contains(t.BaseType.GetGenericTypeDefinition()));
     }
 
