@@ -57,14 +57,14 @@ public static class ModuleLoader
 
             configuration.Tasks.Add(type.FullName,task);
 
-            WriteCoolDebug($"- {type.Name}", " Loaded", ConsoleColor.Green);
+            WriteCoolDebug($"- {type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
         }
         WriteCoolDebug("Loading provider configuration...");
         foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>())
         {
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
             //m.. shit?
-            WriteCoolDebug($"- {type.Name}", " Loaded", ConsoleColor.Green);
+            WriteCoolDebug($"- {type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
         }
 
 
@@ -86,7 +86,7 @@ public static class ModuleLoader
             {
                 var serviceInterface = GetNodeServiceInterface(type);
                 services.AddTransient(serviceInterface, type);
-                WriteCoolDebug($"- ({serviceInterface.Name}){type.Name}{type.AssemblyQualifiedName}", " Loaded", ConsoleColor.Green);
+                WriteCoolDebug($"- ({serviceInterface.Name}){type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
             }
             catch (Exception)
             {
