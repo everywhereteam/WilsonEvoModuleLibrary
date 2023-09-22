@@ -76,7 +76,7 @@ public static class ModuleLoader
         List<Type> types = new();
         var currentDomain = AppDomain.CurrentDomain;
         var assemblies = currentDomain.GetAssemblies();
-
+        
         foreach (var assembly in assemblies) types.AddRange(GetNodeService(assembly));
 
         WriteCoolDebug("Loading service...");
@@ -86,7 +86,7 @@ public static class ModuleLoader
             {
                 var serviceInterface = GetNodeServiceInterface(type);
                 services.AddTransient(serviceInterface, type);
-                WriteCoolDebug($"- ({serviceInterface.Name}){type.Name}", " Loaded", ConsoleColor.Green);
+                WriteCoolDebug($"- ({serviceInterface.Name}){type.Name}{type.AssemblyQualifiedName}", " Loaded", ConsoleColor.Green);
             }
             catch (Exception)
             {
