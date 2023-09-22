@@ -32,53 +32,48 @@ public static class ModuleLoader
 
 ");
         services.LoadNodeServices();
-        services.LoadNodeConfiguration();
-        services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
-            {
-                options.Headers.Add("api-key", apiKey);
-            }).AddNewtonsoftJsonProtocol());
-
+        services.LoadNodeConfiguration(); 
         services.AddSingleton<ModuleClient>();
         services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
         services.AddHostedService<ModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
-
-
         services.AddSingleton<NodeServiceMapper>();
+        services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
+        {
+            options.Headers.Add("api-key", apiKey);
+        }).AddNewtonsoftJsonProtocol());
     }
 
     static void LoadNodeConfiguration(this IServiceCollection services)
-    {
-
+    {          
         var configuration = new ModelsConfiguration();
         WriteCoolDebug("Loading task definitions...");
-        foreach (var type in GetTypesWithAttribute<TaskAttribute>())
+        foreach (var type in GetTypesWithAttribute<TaskAttribute>(GetAssembliesWithoutModule()))
         {
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
-
-            configuration.Tasks.Add(type.FullName, task);
-
+            configuration.Tasks.Add(type.FullName, task);     
             WriteCoolDebug($"- {type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
         }
         WriteCoolDebug("Loading provider configuration...");
-        foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>())
-        {
-            //if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
-            //    continue;
+        foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>(GetAssembliesWithoutModule()))
+        {                     
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
             WriteCoolDebug($"- {type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
         }   
         services.AddSingleton(configuration);
     }
 
-    static void LoadNodeServices(this IServiceCollection services, Assembly? assembly = null)
+    public static IEnumerable<Assembly> GetAssembliesWithoutModule()
     {
-        assembly ??= Assembly.GetCallingAssembly();
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
+        assemblies.Remove(Assembly.GetExecutingAssembly());
+        return assemblies;
+    }
 
+    static void LoadNodeServices(this IServiceCollection services)
+    {      
         WriteCoolDebug("Loading service...");
-        foreach (var type in GetNodeService(assembly))
-        {
-            //if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
-            //    continue;
+        foreach (var type in GetNodeService(GetAssembliesWithoutModule()))
+        {                     
             try
             {
                 var serviceInterface = GetNodeServiceInterface(type);
@@ -108,22 +103,19 @@ public static class ModuleLoader
     private static readonly Type[] ServiceInterfaceType = { typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>) };
 
 
-    public static IEnumerable<Type> GetTypesWithAttribute<TAttribute>(Assembly? assembly = null) where TAttribute : Attribute
+    public static IEnumerable<Type> GetTypesWithAttribute<TAttribute>(IEnumerable<Assembly> assemblies) where TAttribute : Attribute
     {
-        assembly ??= Assembly.GetCallingAssembly();
-        foreach (var type in assembly.GetTypes())
-        {
-            if (type.GetCustomAttributes(typeof(TAttribute), false).Length > 0)
-            {
-                yield return type;
-            }
-        }
+        return assemblies.SelectMany(x=>x.GetTypes()).Where(type => type.GetCustomAttributes(typeof(TAttribute), false).Length > 0);
     }
-    public static IEnumerable<Type> GetNodeService(Assembly assembly)
+ 
+    public static IEnumerable<Type> GetNodeService(IEnumerable<Assembly> assemblies)
     {
-        return assembly.GetTypes().Where(
-            t => t.IsClass && !t.IsAbstract && t.BaseType is { IsGenericType: true } &&
-                 ServiceType.Contains(t.BaseType.GetGenericTypeDefinition()));
+        return assemblies
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(t => t.IsClass &&
+                        !t.IsAbstract &&
+                        t.BaseType is { IsGenericType: true } &&
+                        ServiceType.Contains(t.BaseType.GetGenericTypeDefinition()));
     }
 
     public static Type GetNodeServiceInterface(Type type)
