@@ -53,6 +53,8 @@ public static class ModuleLoader
         WriteCoolDebug("Loading task definitions...");
         foreach (var type in GetTypesWithAttribute<TaskAttribute>())
         {
+            if(type.Assembly.Equals(Assembly.GetExecutingAssembly()))
+                continue;
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
 
             configuration.Tasks.Add(type.FullName,task);
@@ -62,6 +64,8 @@ public static class ModuleLoader
         WriteCoolDebug("Loading provider configuration...");
         foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>())
         {
+            if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
+                continue;
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
             //m.. shit?
             WriteCoolDebug($"- {type.Name}{type.Assembly.FullName}", " Loaded", ConsoleColor.Green);
@@ -82,6 +86,8 @@ public static class ModuleLoader
         WriteCoolDebug("Loading service...");
         foreach (var type in types)
         {
+            if (type.Assembly.Equals(Assembly.GetExecutingAssembly()))
+                continue;
             try
             {
                 var serviceInterface = GetNodeServiceInterface(type);
