@@ -26,11 +26,7 @@ public sealed class NodeServiceMapper
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
         _servicesProvider = service;
         _services = new Dictionary<ulong, Type>();
-        foreach (var assembly in assemblies)
-        {
-            var serviceTypes = ModuleLoader.GetNodeService(assembly);
-            AddService(serviceTypes);
-        }
+        AddService(ModuleLoader.GetNodeService(AppDomain.CurrentDomain.GetAssemblies()));
     }
 
     public Dictionary<string,ModuleNodeDefinition> GetDefinitions()
