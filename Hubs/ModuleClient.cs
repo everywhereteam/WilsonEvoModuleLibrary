@@ -10,6 +10,13 @@ using WilsonEvoModuleLibrary.Services;
 
 namespace WilsonEvoModuleLibrary.Hubs
 {
+    public class CustomRetryPolicy : IRetryPolicy
+    {
+        public TimeSpan? NextRetryDelay(RetryContext retryContext)
+        {
+            return TimeSpan.FromSeconds(5);
+        }
+    }
     public sealed class ModuleClient : IHostedService, IModuleClient
     {
         private readonly IHubConnectionBuilder _hubConnectionBuilder;
@@ -28,7 +35,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             _configuration = configuration;
 
 
-            _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
+            _connection = _hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy() ).Build();
 
             _connection.On<ServiceRequest, Result<ServiceResponse>>(nameof(Execute), Execute);
 
@@ -82,7 +89,7 @@ namespace WilsonEvoModuleLibrary.Hubs
                 {
 
                     retryCount++;
-                    Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}. ");
+                    Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}. \n{e.Message}\n{e.StackTrace}");
                     await Task.Delay(TimeSpan.FromSeconds(10));
                 }
             }
@@ -93,17 +100,14 @@ namespace WilsonEvoModuleLibrary.Hubs
             var errorMsg = error == null ? string.Empty : error.Message;
             Console.WriteLine($"Error occurred: {errorMsg}. Reconnecting...");
             await Task.Delay(TimeSpan.FromSeconds(5));
-            if (_connection.State == HubConnectionState.Connected || _connection.State == HubConnectionState.Connecting)
-            {
-                return;
-            }
+       
             try
             {
                 await _connection.StartAsync();
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error when trying to reconnect: {e.Message}");
+                Console.WriteLine($"Error when trying to reconnect: {e.Message}\n{e.StackTrace}");
             }
         }
 
