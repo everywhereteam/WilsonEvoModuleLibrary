@@ -10,6 +10,7 @@ using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Utility;
 using System.Linq;
+using FluentResults;
 using ReadOnlyAttribute = BlazorDynamicFormGenerator.ReadOnlyAttribute;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
@@ -68,7 +69,7 @@ public sealed class NodeServiceMapper
     }
 
 
-    public async Task<ServiceResponse> ExecuteService(ServiceRequest request)
+    public async Task<Result<ServiceResponse>> ExecuteService(ServiceRequest request)
     {
         var session = request.SessionData;
         var node = await ReadSessionData(request);
@@ -95,7 +96,7 @@ public sealed class NodeServiceMapper
 
         session.CurrentOutput = output;
         response.SessionData = session;
-        return response;
+        return Result.Ok(response);
     }
 
     private async Task<object?> ReadSessionData(ServiceRequest request)

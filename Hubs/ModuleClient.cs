@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentResults;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -29,7 +30,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
             _connection = _hubConnectionBuilder.WithAutomaticReconnect().Build();
 
-            _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
+            _connection.On<ServiceRequest, Result<ServiceResponse>>(nameof(Execute), Execute);
 
             _connection.Closed += Reconnect;
             _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
@@ -55,7 +56,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             return result.Response;
         }
 
-        public async Task<ServiceResponse> Execute(ServiceRequest request)
+        public async Task<Result<ServiceResponse>> Execute(ServiceRequest request)
         {
             return await _mapper.ExecuteService(request);
         }
