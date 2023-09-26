@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Hubs;
+using WilsonEvoModuleLibrary.Network;
 using WilsonEvoModuleLibrary.Services;
 using WilsonEvoModuleLibrary.Services.Core;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
@@ -58,7 +59,23 @@ public static class ModuleLoader
         {                     
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
             WriteCoolDebug($"   -{type.Name}", " Loaded", ConsoleColor.Green);
-        }   
+        }
+        WriteCoolDebug("Loading network definitions...");
+        configuration.Network = new();
+        foreach (var type in GetNodeService(AppDomain.CurrentDomain.GetAssemblies()))
+        {
+            var interfaceService = ModuleLoader.GetNodeServiceInterface(type);
+            var args = interfaceService.GenericTypeArguments;
+            if (args.Length == 1)
+            {
+                configuration.Network.Network.Add(args[0].Name);
+                WriteCoolDebug($"   -{args[0].Name}", " Loaded", ConsoleColor.Green);
+            } else if (args.Length == 2)
+            {
+                configuration.Network.Network.Add($"{args[0].Name}.{args[1].Name}");
+                WriteCoolDebug($"   -{args[0].Name}.{args[1].Name}", " Loaded", ConsoleColor.Green);
+            }
+        }
         services.AddSingleton(configuration);
     }
 
@@ -117,7 +134,10 @@ public static class ModuleLoader
                         t.BaseType is { IsGenericType: true } &&
                         ServiceType.Contains(t.BaseType.GetGenericTypeDefinition()));
     }
-
+    public static IEnumerable<Type> GetNodeServiceInterface(IEnumerable<Type> types)
+    {
+        return types.Select(x=>x.GetInterfaces().First(i => i.IsGenericType && ServiceInterfaceType.Contains(i.GetGenericTypeDefinition())));
+    }
     public static Type GetNodeServiceInterface(Type type)
     {
         return type.GetInterfaces().First(i => i.IsGenericType && ServiceInterfaceType.Contains(i.GetGenericTypeDefinition()));

@@ -5,7 +5,7 @@ using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 namespace WilsonEvoModuleLibrary.Services.Core
 {
     public abstract class NodeServices<TN, TC> : IExecutionService, INodeServices<TN, TC>
-        where TN : class where TC : class
+        where TN : BaseTask where TC : class
     {
         public Task Execute(in object nodeData, ref SessionData data, ref string output)
         {

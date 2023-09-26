@@ -4,7 +4,7 @@ using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Services.Core
 {
-    public abstract class AsyncNodeServices<TN, TC> : IAsyncExecutionService, IAsyncNodeServices<TN, TC> where TN : class where TC : class
+    public abstract class AsyncNodeServices<TN, TC> : IAsyncExecutionService, IAsyncNodeServices<TN, TC> where TN : BaseTask where TC : class
     {
         public Task Execute(in object nodeData, ref SessionData sessionDataData, ref string output)
         {

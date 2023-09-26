@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using WilsonEvoModuleLibrary.Attributes;
+using WilsonEvoModuleLibrary.Network;
 
 namespace WilsonEvoModuleLibrary.Entities
 {
@@ -7,5 +8,6 @@ namespace WilsonEvoModuleLibrary.Entities
     {
         public TaskProviderAttribute? TaskProvider { get; set; }
         public Dictionary<string, TaskAttribute> Tasks { get; set; } = new();
+        public NetworkDefinition Network { get; set; }
     }
 }                                                                             
