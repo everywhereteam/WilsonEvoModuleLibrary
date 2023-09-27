@@ -99,16 +99,16 @@ namespace WilsonEvoModuleLibrary.Hubs
         {
             var errorMsg = error == null ? string.Empty : error.Message;
             Console.WriteLine($"Error occurred: {errorMsg}. Reconnecting...");
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            //await Task.Delay(TimeSpan.FromSeconds(5));
        
-            try
-            {
-                await _connection.StartAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error when trying to reconnect: {e.Message}\n{e.StackTrace}");
-            }
+            //try
+            //{
+            //    await _connection.StartAsync();
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine($"Error when trying to reconnect: {e.Message}\n{e.StackTrace}");
+            //}
         }
 
 
