@@ -37,7 +37,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
             _connection = _hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy() ).Build();
 
-            _connection.On<ServiceRequest, Result<ServiceResponse>>(nameof(Execute), Execute);
+            _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
 
             _connection.Closed += Reconnect;
             _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
@@ -63,7 +63,7 @@ namespace WilsonEvoModuleLibrary.Hubs
             return result.Response;
         }
 
-        public async Task<Result<ServiceResponse>> Execute(ServiceRequest request)
+        public async Task<ServiceResponse> Execute(ServiceRequest request)
         {
             return await _mapper.ExecuteService(request);
         }

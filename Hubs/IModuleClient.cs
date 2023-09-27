@@ -6,6 +6,6 @@ namespace WilsonEvoModuleLibrary.Hubs
 {
     public interface IModuleClient
     {
-        public Task<Result<ServiceResponse>> Execute(ServiceRequest request);  
+        public Task<ServiceResponse> Execute(ServiceRequest request);  
     } 
 }

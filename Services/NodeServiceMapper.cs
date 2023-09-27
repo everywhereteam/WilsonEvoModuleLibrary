@@ -69,7 +69,7 @@ public sealed class NodeServiceMapper
     }
 
 
-    public async Task<Result<ServiceResponse>> ExecuteService(ServiceRequest request)
+    public async Task<ServiceResponse> ExecuteService(ServiceRequest request)
     {
         var session = request.SessionData;
         var node = await ReadSessionData(request);
@@ -96,7 +96,7 @@ public sealed class NodeServiceMapper
 
         session.CurrentOutput = output;
         response.SessionData = session;
-        return Result.Ok(response);
+        return response;
     }
 
     private async Task<object?> ReadSessionData(ServiceRequest request)
