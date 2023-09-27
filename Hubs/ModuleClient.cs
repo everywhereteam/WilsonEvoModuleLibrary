@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentResults;
@@ -39,7 +40,8 @@ namespace WilsonEvoModuleLibrary.Hubs
 
             _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
 
-            _connection.Closed += Reconnect;
+            _connection.Closed += Closed;
+          
             _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
@@ -75,40 +77,19 @@ namespace WilsonEvoModuleLibrary.Hubs
         private async Task Connect()
         {
             await _connection.StartAsync();
-            await _connection.InvokeAsync("RegisterServices", _configuration);
-            //int retryCount = 0;
-
-            //while (true)
-            //{
-            //    try
-            //    {
-
-            //        break;
-            //    }
-            //    catch (Exception e)
-            //    {
-
-            //        retryCount++;
-            //        Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}. \n{e.Message}\n{e.StackTrace}");
-            //        await Task.Delay(TimeSpan.FromSeconds(10));
-            //    }
-            //}
+            if (_connection.State == HubConnectionState.Connected)
+            {
+                await _connection.SendAsync("RegisterServices", _configuration);
+            }                                                                             
+   
         }
 
-        private async Task Reconnect(Exception? error)
+        private async Task Closed(Exception? error)
         {
             var errorMsg = error == null ? string.Empty : error.Message;
-            Console.WriteLine($"Error occurred: {errorMsg}. Reconnecting...");
-            //await Task.Delay(TimeSpan.FromSeconds(5));
+           
+            Console.WriteLine($"Connection closed with the master node. \n{errorMsg}");
        
-            //try
-            //{
-            //    await _connection.StartAsync();
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine($"Error when trying to reconnect: {e.Message}\n{e.StackTrace}");
-            //}
         }
 
 
