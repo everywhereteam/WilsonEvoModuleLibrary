@@ -69,30 +69,30 @@ namespace WilsonEvoModuleLibrary.Hubs
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
-        {
-
+        {                           
         }
 
         private async Task Connect()
         {
-            int retryCount = 0;
+            await _connection.StartAsync();
+            await _connection.InvokeAsync("RegisterServices", _configuration);
+            //int retryCount = 0;
 
-            while (true)
-            {
-                try
-                {
-                    await _connection.StartAsync();                   
-                    await _connection.InvokeAsync("RegisterServices", _configuration);
-                    break;
-                }
-                catch (Exception e)
-                {
+            //while (true)
+            //{
+            //    try
+            //    {
 
-                    retryCount++;
-                    Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}. \n{e.Message}\n{e.StackTrace}");
-                    await Task.Delay(TimeSpan.FromSeconds(10));
-                }
-            }
+            //        break;
+            //    }
+            //    catch (Exception e)
+            //    {
+
+            //        retryCount++;
+            //        Console.WriteLine($"Failed to start the connection with the server. Attempt number {retryCount}. \n{e.Message}\n{e.StackTrace}");
+            //        await Task.Delay(TimeSpan.FromSeconds(10));
+            //    }
+            //}
         }
 
         private async Task Reconnect(Exception? error)
