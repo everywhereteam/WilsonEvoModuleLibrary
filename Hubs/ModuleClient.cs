@@ -42,7 +42,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
             _connection.Closed += Closed;
           
-            _hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
+            //_hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
         public async Task Log(LogLevel logLevel, EventId eventId, string? state = null, string? sessionId = null, Exception? exception = null, CancellationToken token = default)
@@ -71,17 +71,18 @@ namespace WilsonEvoModuleLibrary.Hubs
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
-        {                           
-        }
-
-        private async Task Connect()
         {
             await _connection.StartAsync();
             if (_connection.State == HubConnectionState.Connected)
             {
                 await _connection.SendAsync("RegisterServices", _configuration);
-            }                                                                             
-   
+            }
+
+        }
+
+        private async Task Connect()
+        {
+            
         }
 
         private async Task Closed(Exception? error)
