@@ -9,5 +9,7 @@ namespace WilsonEvoModuleLibrary.Entities
         public TaskProviderAttribute? TaskProvider { get; set; }
         public Dictionary<string, TaskAttribute>? Tasks { get; set; } 
         public NetworkDefinition? Network { get; set; }
+
+        public ModelsConfiguration() { }
     }
 }                                                                             
