@@ -74,8 +74,8 @@ namespace WilsonEvoModuleLibrary.Hubs
         {
             await _connection.StartAsync();
             if (_connection.State == HubConnectionState.Connected)
-            {
-                await _connection.SendAsync("RegisterServices", _configuration);
+            {                                                             
+                await _connection.InvokeAsync("RegisterServices", _configuration);
             }
 
         }

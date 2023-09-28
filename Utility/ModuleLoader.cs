@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Entities;
@@ -54,6 +55,7 @@ public static class ModuleLoader
         }
         var configuration = new ModelsConfiguration();
         WriteCoolDebug("Loading task definitions...");
+        configuration.Tasks = new Dictionary<string, TaskAttribute>(); 
         foreach (var type in GetTypesWithAttribute<TaskAttribute>(GetAssembliesWithoutModule()))
         {
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
@@ -67,7 +69,8 @@ public static class ModuleLoader
             WriteCoolDebug($"   -{type.Name}", " Loaded", ConsoleColor.Green);
         }
         WriteCoolDebug("Loading network definitions...");
-        configuration.Network = new();
+        configuration.Network = new NetworkDefinition();
+        configuration.Network.Network = new List<string>();
         foreach (var type in GetNodeService(AppDomain.CurrentDomain.GetAssemblies()))
         {
             var interfaceService = ModuleLoader.GetNodeServiceInterface(type);
