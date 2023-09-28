@@ -4,7 +4,7 @@ namespace WilsonEvoModuleLibrary.Network
 {
     public class NetworkDefinition
     {
-        public List<string>? Network { get; set; }
+        public List<string> Network { get; set; }
         
         public NetworkDefinition() { }
 

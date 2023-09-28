@@ -38,6 +38,8 @@ public class TaskAttribute : Attribute
         DefaultOutputs = defaultOutputs;
     }
 
+    public TaskAttribute(){}
+
 
     public string Name { get; set; }
     public string Category { get; set; }

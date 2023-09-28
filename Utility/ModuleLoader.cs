@@ -41,7 +41,7 @@ public static class ModuleLoader
         services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
         {
             options.Headers.Add("api-key", apiKey);
-        }).AddNewtonsoftJsonProtocol(x=>{x.PayloadSerializerSettings.Error = (sender, args) =>  Console.WriteLine(args.ErrorContext.Error.Message);}));
+        }).AddNewtonsoftJsonProtocol());
     }
 
     static void LoadConfiguration(this IServiceCollection services)
