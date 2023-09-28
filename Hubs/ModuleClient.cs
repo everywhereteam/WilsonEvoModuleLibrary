@@ -25,7 +25,7 @@ namespace WilsonEvoModuleLibrary.Hubs
         private readonly NodeServiceMapper _mapper;
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
-        private readonly ModelsConfiguration _configuration;
+        private ModelsConfiguration _configuration;
 
         public ModuleClient(ModelsConfiguration configuration, ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
         {
