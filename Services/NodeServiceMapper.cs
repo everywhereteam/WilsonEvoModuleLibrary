@@ -20,6 +20,7 @@ namespace WilsonEvoModuleLibrary.Services;
 public sealed class NodeServiceMapper
 {
     private readonly Dictionary<ulong, Type> _services;
+    private readonly Dictionary<string, Type> _servicesmap;
     private readonly IServiceProvider _servicesProvider;
 
     public NodeServiceMapper(IServiceProvider service)
@@ -27,6 +28,7 @@ public sealed class NodeServiceMapper
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
         _servicesProvider = service;
         _services = new Dictionary<ulong, Type>();
+        _servicesmap = new Dictionary<string, Type>();
         AddService(ModuleLoader.GetNodeService(AppDomain.CurrentDomain.GetAssemblies()));
     }
 
@@ -105,7 +107,9 @@ public sealed class NodeServiceMapper
 
         using var reader = new BsonDataReader(ms);
         var o = (JObject)await JToken.ReadFromAsync(reader);
-        var getType = Type.GetType(request.Type);
+        //we need a mapper here                                  
+        if (!_servicesmap.TryGetValue(request.Type, out var getType))
+            return null;
         if (getType != null) 
             return o.ToObject(getType);
 
@@ -120,13 +124,23 @@ public sealed class NodeServiceMapper
             var lookup = ulong.MaxValue;
             var args = interfaceService.GenericTypeArguments;
             if (args.Length == 1)
+            {
                 lookup = Decode(args[0].GetHashCode(), 0);
-            else if (args.Length == 2) lookup = Decode(args[0].GetHashCode(), args[1].GetHashCode());
+                if (!_servicesmap.TryAdd(args[0].Name, args[0]))
+                    throw new Exception("NodeServiceMapper, possible collision on service type");
+            }
+            else if (args.Length == 2)
+            {
+                lookup = Decode(args[0].GetHashCode(), args[1].GetHashCode());
+                if (!_servicesmap.TryAdd(args[0].Name, args[0]))
+                    throw new Exception("NodeServiceMapper, possible collision on service type");
+            }
 
             if (lookup == ulong.MaxValue) throw new Exception("NodeServiceMapper, error lookup id is invalid");
 
             if (!_services.TryAdd(lookup, type))
                 throw new Exception("NodeServiceMapper, possible collision on service type");
+            
         }
     }
 
