@@ -17,7 +17,7 @@ namespace WilsonEvoModuleLibrary.Entities
         public string ChannelType { get; set; }
         public string Output { get; set; }
         public dynamic Request { get; set; }
-        public byte[] Response { get; set; }
+        public byte[]? Response { get; set; }
         public string CurrentNodeId { get; set; }
         public string CurrentShortUrl { get; set; }
         public string CurrentOutput { get; set; }
@@ -39,7 +39,7 @@ namespace WilsonEvoModuleLibrary.Entities
 
         public T? GetResponse<T>() where T : class
         {
-            return BinarySerialization.Deserialize<T>(Response);
+            return Response is null ? null : BinarySerialization.Deserialize<T>(Response);
         }
     }
 }
