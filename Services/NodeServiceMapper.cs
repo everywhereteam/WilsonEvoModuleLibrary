@@ -77,7 +77,7 @@ public sealed class NodeServiceMapper
         var node = await ReadSessionData(request);
         var response = new ServiceResponse();
         var output = "ok";
-        var type = Type.GetType(session.ChannelType);
+        var type = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x=>x.GetTypes()).SingleOrDefault(x=>x.FullName == session.ChannelType);
         var serviceType = GetService(node.GetType(), type); 
         var service = serviceType is not null ? _servicesProvider.GetService(ModuleLoader.GetNodeServiceInterface(serviceType)) : null;
         if (service is IExecutionService syncService)
@@ -94,6 +94,14 @@ public sealed class NodeServiceMapper
         {
             await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
             session.WaitingCallback = false;
+        }
+        else
+        {
+            //this is shit where i go?
+            session.ContinueExecution = false;
+            session.WaitingCallback = false;
+            session.IsFaulted = true;
+            session.Exception = "Module service not found.";
         }
 
         session.CurrentOutput = output;

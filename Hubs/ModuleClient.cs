@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentResults;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WilsonEvoModuleLibrary.Entities;
@@ -26,22 +27,23 @@ namespace WilsonEvoModuleLibrary.Hubs
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
         private ModelsConfiguration _configuration;
+        
 
-        public ModuleClient(ModelsConfiguration configuration, ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
+
+        public ModuleClient( ModelsConfiguration configuration, ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
         {
             _hubConnectionBuilder = hubConnectionBuilder;
             _mapper = mapper;
             _logger = logger;
             _hostApplicationLifetime = hostApplicationLifetime;
-            _configuration = configuration;
+            _configuration = configuration; 
 
-
-            _connection = _hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy() ).Build();
+            _connection = _hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy()).Build();
 
             _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
 
             _connection.Closed += Closed;
-          
+
             //_hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
@@ -50,19 +52,19 @@ namespace WilsonEvoModuleLibrary.Hubs
             await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
         }
 
-        public async Task<dynamic> Start(object channel, string shortUrl, SessionData session = null, CancellationToken token = default)
+        public async Task<T> Start<T>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default) where T : class
         {
             session ??= new SessionData();
             session.ChannelType = channel.GetType().FullName ?? string.Empty;
             session.CurrentShortUrl = shortUrl;
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-            return response.Response;
+            return response.Response as T;
         }
 
-        public async Task<dynamic> Next(string sessionId, object response, CancellationToken token = default)
+        public async Task<T> Next<T>(string sessionId, object response, CancellationToken token = default) where T : class
         {
             var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
-            return result.Response;
+            return result.Response as T;
         }
 
         public async Task<ServiceResponse> Execute(ServiceRequest request)
@@ -74,7 +76,7 @@ namespace WilsonEvoModuleLibrary.Hubs
         {
             await _connection.StartAsync();
             if (_connection.State == HubConnectionState.Connected)
-            {                                                             
+            {
                 await _connection.InvokeAsync("RegisterServicesDAQ", _configuration);
             }
 
@@ -82,15 +84,15 @@ namespace WilsonEvoModuleLibrary.Hubs
 
         private async Task Connect()
         {
-            
+
         }
 
         private async Task Closed(Exception? error)
         {
             var errorMsg = error == null ? string.Empty : error.Message;
-           
+
             Console.WriteLine($"Connection closed with the master node. \n{errorMsg}");
-       
+
         }
 
 

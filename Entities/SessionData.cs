@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using WilsonEvoModuleLibrary.Utility;
 
 namespace WilsonEvoModuleLibrary.Entities
 {
@@ -16,7 +17,7 @@ namespace WilsonEvoModuleLibrary.Entities
         public string ChannelType { get; set; }
         public string Output { get; set; }
         public dynamic Request { get; set; }
-        public dynamic Response { get; set; }
+        public byte[] Response { get; set; }
         public string CurrentNodeId { get; set; }
         public string CurrentShortUrl { get; set; }
         public string CurrentOutput { get; set; }
@@ -24,9 +25,21 @@ namespace WilsonEvoModuleLibrary.Entities
         public bool WaitingCallback { get; set; } = false;
         public bool ContinueExecution { get; set; } = true;
         public bool IsFaulted { get; set; } = false;
+        public bool IsEndedCorrectly { get; set; } = false;
         public string Exception { get; set; } = string.Empty;
         public Dictionary<string, object> VarData { get; set; } = new Dictionary<string, object>();
 
 
+        public SessionData(){}
+
+        public void SaveResponse(object data)
+        {
+            Response = BinarySerialization.Serialize(data);
+        }
+
+        public T? GetResponse<T>() where T : class
+        {
+            return BinarySerialization.Deserialize<T>(Response);
+        }
     }
 }
