@@ -1,10 +1,7 @@
-﻿using System;
-using System.Data.Common;
+﻿using System;               
 using System.Threading;
-using System.Threading.Tasks;
-using FluentResults;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks; 
+using Microsoft.AspNetCore.SignalR.Client;       
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WilsonEvoModuleLibrary.Entities;
@@ -27,16 +24,16 @@ namespace WilsonEvoModuleLibrary.Hubs
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
         private ModelsConfiguration _configuration;
-        
 
 
-        public ModuleClient( ModelsConfiguration configuration, ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
+
+        public ModuleClient(ModelsConfiguration configuration, ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
         {
             _hubConnectionBuilder = hubConnectionBuilder;
             _mapper = mapper;
             _logger = logger;
             _hostApplicationLifetime = hostApplicationLifetime;
-            _configuration = configuration; 
+            _configuration = configuration;
 
             _connection = _hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy()).Build();
 
@@ -74,10 +71,24 @@ namespace WilsonEvoModuleLibrary.Hubs
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await _connection.StartAsync();
-            if (_connection.State == HubConnectionState.Connected)
+            while (true)
             {
-                await _connection.InvokeAsync("RegisterServicesDAQ", _configuration);
+                try
+                {
+                    await _connection.StartAsync(cancellationToken);
+                    if (_connection.State == HubConnectionState.Connected)
+                    {
+                        await _connection.InvokeAsync("RegisterServicesDAQ", _configuration,
+                            cancellationToken: cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                    await _connection.StopAsync(cancellationToken);
+                }
+
             }
 
         }
@@ -89,7 +100,7 @@ namespace WilsonEvoModuleLibrary.Hubs
 
         private async Task Closed(Exception? error)
         {
-            var errorMsg = error == null ? string.Empty : error.Message;
+            var errorMsg = error == null ? string.Empty : error.Message + error.StackTrace;
 
             Console.WriteLine($"Connection closed with the master node. \n{errorMsg}");
 
@@ -99,8 +110,8 @@ namespace WilsonEvoModuleLibrary.Hubs
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogWarning("[Wilson] Closing Connection..");
-            if (_connection != null)
-                await _connection.DisposeAsync();
+            //await _connection.StopAsync(cancellationToken);
+            await _connection.DisposeAsync();
         }
 
 

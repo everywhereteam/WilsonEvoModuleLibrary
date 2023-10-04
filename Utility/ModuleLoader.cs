@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Hubs;
@@ -19,6 +23,14 @@ public static class ModuleLoader
 {
     public static void AddWilsonCore(this IServiceCollection services, string url, string apiKey)
     {
+        //Console.SetOut(new LogTextWriter(Console.Out));
+        string sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .WriteTo.Console()
+            .WriteTo.File($"logs/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
+            .CreateLogger();
+        services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog());
         Console.WriteLine(@"
  _       ___ __                    ___          _    __  ___          __      __        
 | |     / (_) /________  ____     /   |  ____  (_)  /  |/  /___  ____/ /_  __/ /__      
@@ -32,7 +44,8 @@ public static class ModuleLoader
 /_____/ |___/\___/_/   \__, / |__/|__/_/ /_/\___/_/   \___/  /____(_)_(_)/_(_)          
                       /____/
 
-");                                   
+");                      
+        
         services.LoadConfiguration();
         services.AddSingleton<ModuleClient>();
         services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
@@ -53,21 +66,25 @@ public static class ModuleLoader
             services.AddTransient(serviceInterface, type);
             WriteCoolDebug($"   -{type.Name}", " Loaded", ConsoleColor.Green);
         }
+
         var configuration = new ModelsConfiguration();
         WriteCoolDebug("Loading task definitions...");
-        configuration.Tasks = new Dictionary<string, TaskAttribute>(); 
+        configuration.Tasks = new Dictionary<string, TaskAttribute>();
         foreach (var type in GetTypesWithAttribute<TaskAttribute>(GetAssembliesWithoutModule()))
         {
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
             configuration.Tasks.Add(type.FullName, task);
             WriteCoolDebug($"   -{type.Name}", " Loaded", ConsoleColor.Green);
         }
+
         WriteCoolDebug("Loading provider configuration...");
         foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>(GetAssembliesWithoutModule()))
         {
-            configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false).Cast<TaskProviderAttribute>().FirstOrDefault();
+            configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false)
+                .Cast<TaskProviderAttribute>().FirstOrDefault();
             WriteCoolDebug($"   -{type.Name}", " Loaded", ConsoleColor.Green);
         }
+
         WriteCoolDebug("Loading network definitions...");
         configuration.Network = new NetworkDefinition();
         configuration.Network.Network = new List<string>();
@@ -86,6 +103,7 @@ public static class ModuleLoader
                 WriteCoolDebug($"   -{args[0].Name}.{args[1].Name}", " Loaded", ConsoleColor.Green);
             }
         }
+
         services.AddSingleton(configuration);
     }
 
@@ -133,4 +151,6 @@ public static class ModuleLoader
     {
         return type.GetInterfaces().First(i => i.IsGenericType && ServiceInterfaceType.Contains(i.GetGenericTypeDefinition()));
     }
+
+   
 }
