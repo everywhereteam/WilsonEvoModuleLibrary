@@ -24,11 +24,12 @@ public static class ModuleLoader
     public static void AddWilsonCore(this IServiceCollection services, string url, string apiKey)
     {
         //Console.SetOut(new LogTextWriter(Console.Out));
+        string logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
         string sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .WriteTo.Console()
-            .WriteTo.File($"logs/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
+            .WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
             .CreateLogger();
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog());
         Console.WriteLine(@"
