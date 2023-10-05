@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks; 
 using Microsoft.AspNetCore.SignalR.Client;       
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services;
 

@@ -47,7 +47,7 @@ public static class ModuleLoader
                       /____/
 
 ");
-        services.AddSingleton<Serilog.ILogger>(Log.Logger);
+        services.AddSingleton<ILogger>(Log.Logger);
         services.LoadConfiguration();
         services.AddSingleton<ModuleClient>();
         services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
