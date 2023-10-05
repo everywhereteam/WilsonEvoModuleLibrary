@@ -20,14 +20,14 @@ namespace WilsonEvoModuleLibrary.Hubs
     {
         private readonly IHubConnectionBuilder _hubConnectionBuilder;
         private HubConnection _connection;
-        private readonly NodeServiceMapper _mapper;
-        private readonly ILogger _logger;
+        private readonly NodeServiceMapper _mapper; 
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
         private ModelsConfiguration _configuration;
+        private readonly ILogger _logger;
 
 
 
-        public ModuleClient(ModelsConfiguration configuration, ILogger<ModuleClient> logger, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
+        public ModuleClient(ILogger logger,ModelsConfiguration configuration, IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper, IHostApplicationLifetime hostApplicationLifetime)
         {
             _hubConnectionBuilder = hubConnectionBuilder;
             _mapper = mapper;
@@ -84,7 +84,7 @@ namespace WilsonEvoModuleLibrary.Hubs
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    _logger.LogError(ex.Message);
                     await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
                     await _connection.StopAsync(cancellationToken);
                 }
@@ -102,7 +102,7 @@ namespace WilsonEvoModuleLibrary.Hubs
         {
             var errorMsg = error == null ? string.Empty : error.Message + error.StackTrace;
 
-            Console.WriteLine($"Connection closed with the master node. \n{errorMsg}");
+            _logger.LogInformation($"Connection closed with the master node. \n{errorMsg}");
 
         }
 
