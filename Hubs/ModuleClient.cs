@@ -44,10 +44,10 @@ namespace WilsonEvoModuleLibrary.Hubs
             //_hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
-        public async Task Log(LogLevel logLevel, EventId eventId, string? state = null, string? sessionId = null, Exception? exception = null, CancellationToken token = default)
-        {
-            await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
-        }
+        //public async Task Log(LogLevel logLevel, EventId eventId, string? state = null, string? sessionId = null, Exception? exception = null, CancellationToken token = default)
+        //{
+        //    await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
+        //}
 
         public async Task<T?> Start<T>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default) where T : class
         {
@@ -84,7 +84,7 @@ namespace WilsonEvoModuleLibrary.Hubs
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex.Message);
+                    _logger.Error(ex.Message);
                     await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
                     await _connection.StopAsync(cancellationToken);
                 }
@@ -102,14 +102,14 @@ namespace WilsonEvoModuleLibrary.Hubs
         {
             var errorMsg = error == null ? string.Empty : error.Message + error.StackTrace;
 
-            _logger.LogInformation($"Connection closed with the master node. \n{errorMsg}");
+            _logger.Information($"Connection closed with the master node. \n{errorMsg}");
 
         }
 
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogWarning("[Wilson] Closing Connection..");
+            _logger.Warning("[Wilson] Closing Connection..");
             //await _connection.StopAsync(cancellationToken);
             await _connection.DisposeAsync();
         }
