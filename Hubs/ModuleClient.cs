@@ -80,6 +80,8 @@ namespace WilsonEvoModuleLibrary.Hubs
                     {
                         await _connection.InvokeAsync("RegisterServicesDAQ", _configuration,
                             cancellationToken: cancellationToken);
+
+                        return;
                     }
                 }
                 catch (Exception ex)

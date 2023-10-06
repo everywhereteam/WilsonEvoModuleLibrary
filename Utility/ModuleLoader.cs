@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Security;
 using System.Reflection;
 using System.Text;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,8 +24,14 @@ namespace WilsonEvoModuleLibrary.Utility;
 
 public static class ModuleLoader
 {
-    public static void AddWilsonCore(this IServiceCollection services, string url, string apiKey)
+    public static void AddWilsonCore(this IServiceCollection services, string apiKey)
     {
+
+#if DEBUG
+        var url = "https://localhost:7080/hub/module";
+#else
+        var url = "https://core.gestewwai.it/hub/module";
+#endif
         //Console.SetOut(new LogTextWriter(Console.Out));
         string logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
         string sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
@@ -54,7 +62,8 @@ public static class ModuleLoader
         services.AddHostedService<ModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
         services.AddSingleton<NodeServiceMapper>();
         services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
-        {
+        {          
+            options.Transports = HttpTransportType.WebSockets;
             options.Headers.Add("api-key", apiKey);
         }).AddNewtonsoftJsonProtocol());
     }
