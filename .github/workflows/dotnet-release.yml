@@ -10,6 +10,6 @@ jobs:
   call-reusable-workflow:
     uses: everywhereteam/.github-private/.github/workflows/librarybuildupdate.yml@main
     with:
-      event_type: library-update
+      event_type: 'library-update'
     secrets:
       ew_token: ${{ secrets.EW_TOKEN }}
