@@ -1,9 +1,10 @@
 name: Trigger Module Repos Action
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["dotnet-release"]
+    types:
+      - completed
 
 jobs:
   trigger:
