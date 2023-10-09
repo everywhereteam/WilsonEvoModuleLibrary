@@ -34,3 +34,27 @@ jobs:
     - name: dotnet push GITHUB NUGET
       shell: bash
       run: dotnet nuget push ${{ github.workspace }}/bin/**/*.nupkg --skip-duplicate --source "github"
+  update-libs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Trigger action in Module repos
+      run: |
+        repos=$(curl -H "Authorization: token ${{ secrets.EW_TOKEN }}" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    https://api.github.com/orgs/everywhereteam/repos?per_page=100 | \
+               jq -r '.[].full_name')
+
+        for repo in $repos; do
+          echo "Triggering action in $repo"
+          curl -X POST \
+               -H "Authorization: token ${{ secrets.EW_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/$repo/dispatches \
+               -d '{"event_type": "library-update"}'
+        done
+      env:
+        PAT: ${{ secrets.EW_TOKEN }}
