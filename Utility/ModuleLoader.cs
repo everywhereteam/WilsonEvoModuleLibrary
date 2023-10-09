@@ -128,7 +128,7 @@ public static class ModuleLoader
         return assemblies;
     }
 
-    private static readonly Type[] ServiceType = { typeof(NodeService<>), typeof(NodeServices<,>), typeof(AsyncNodeService<>), typeof(AsyncNodeServices<,>) };
+    private static readonly Type[] ServiceType = { typeof(NodeServiceA<>), typeof(NodeServices<,>), typeof(AsyncNodeService<>), typeof(AsyncNodeServices<,>) };
     private static readonly Type[] ServiceInterfaceType = { typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>) };
 
 
