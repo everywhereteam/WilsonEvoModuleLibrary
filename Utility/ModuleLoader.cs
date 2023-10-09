@@ -55,6 +55,8 @@ public static class ModuleLoader
                       /____/
 
 ");
+
+        //TODO: test
         services.AddSingleton<ILogger>(Log.Logger);
         services.LoadConfiguration();
         services.AddSingleton<ModuleClient>();
