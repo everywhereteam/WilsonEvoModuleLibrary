@@ -63,6 +63,7 @@ public static class ModuleLoader
         services.AddSingleton<NodeServiceMapper>();
         services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
         {          
+
             options.Transports = HttpTransportType.WebSockets;
             options.Headers.Add("api-key", apiKey);
         }).AddNewtonsoftJsonProtocol());
