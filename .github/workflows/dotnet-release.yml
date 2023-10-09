@@ -8,7 +8,7 @@ on:
 
 jobs:
   call-reusable-workflow:
-    uses: everywhereteam/.github-private/tree/main/.github/workflows/librarybuildupdate.yml@main
+    uses: everywhereteam/.github-private/.github/workflows/librarybuildupdate.yml@main
     with:
       event_type: library-update
     secrets:
