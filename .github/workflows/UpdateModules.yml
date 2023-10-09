@@ -15,10 +15,6 @@ jobs:
 
     - name: Trigger action in Module repos
       run: |
-        response=$(curl -H "Authorization: token ${{ secrets.EW_TOKEN }}" \
-             -H "Accept: application/vnd.github.v3+json" \
-             https://api.github.com/orgs/everywhereteam/repos?per_page=100)
-        echo "$response"
         repos=$(curl -H "Authorization: token ${{ secrets.EW_TOKEN }}" \
                     -H "Accept: application/vnd.github.v3+json" \
                     https://api.github.com/orgs/everywhereteam/repos?per_page=100 | \
