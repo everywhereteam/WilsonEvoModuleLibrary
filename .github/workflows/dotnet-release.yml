@@ -1,4 +1,4 @@
-name: Main Workflow
+name: Deploy and Update
 
 on:
   push:
@@ -7,9 +7,54 @@ on:
     branches: [ "main" ]
 
 jobs:
-  call-reusable-workflow:
-    uses: everywhereteam/.github-private/.github/workflows/librarybuildupdate.yml@main
-    with:
-      event_type: 'library-update'
-    secrets:
-      ew_token: ${{ secrets.EW_TOKEN }}
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+    - name: Prep packages
+      run: dotnet nuget add source --username TheSmallPixel --password ${{ secrets.EW_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/everywhereteam/index.json"
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build -c Release --nologo --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: dotnet pack
+      run: dotnet pack -c Release --nologo --no-build
+      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    - name: dotnet push GITHUB NUGET
+      shell: bash
+      run: dotnet nuget push ${{ github.workspace }}/bin/**/*.nupkg --skip-duplicate --source "github"
+  update-libs:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Wait for 1 minutes
+      run: sleep 60
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Trigger action in Module repos
+      run: |
+        repos=$(curl -H "Authorization: token ${{ secrets.EW_TOKEN }}" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    https://api.github.com/orgs/everywhereteam/repos?per_page=100 | \
+               jq -r '.[].full_name')
+
+        for repo in $repos; do
+          echo "Triggering action in $repo"
+          curl -X POST \
+               -H "Authorization: token ${{ secrets.EW_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/$repo/dispatches \
+               -d '{"event_type": "library-update"}'
+        done
+      env:
+        PAT: ${{ secrets.EW_TOKEN }}
