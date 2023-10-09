@@ -3,8 +3,7 @@ name: Trigger Module Repos Action
 on:
   workflow_run:
     workflows: ["dotnet-release"]
-    types:
-      - completed
+    types: [completed]
 
 jobs:
   trigger:
