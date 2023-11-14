@@ -100,20 +100,19 @@ public static class ModuleLoader
         }
 
         Log.Information("Loading network definitions...");
-        configuration.Network = new NetworkDefinition();
-        configuration.Network.Network = new List<string>();
+        configuration.Network = new NetworkDefinition();   
         foreach (var type in GetNodeService(AppDomain.CurrentDomain.GetAssemblies()))
         {
             var interfaceService = ModuleLoader.GetNodeServiceInterface(type);
             var args = interfaceService.GenericTypeArguments;
             if (args.Length == 1)
             {
-                configuration.Network.Network.Add(args[0].Name);
+                configuration.Network.Network.Add(args[0].Name, string.Empty);
                 Log.Information($"   -{args[0].Name}", " Loaded");
             }
             else if (args.Length == 2)
             {
-                configuration.Network.Network.Add($"{args[0].Name}.{args[1].Name}");
+                configuration.Network.Network.Add(args[0].Name,args[1].Name);
                 Log.Information($"   -{args[0].Name}.{args[1].Name}", " Loaded");
             }
         }

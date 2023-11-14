@@ -44,10 +44,6 @@ namespace WilsonEvoModuleLibrary.Hubs
             //_hostApplicationLifetime.ApplicationStarted.Register(() => Connect());
         }
 
-        //public async Task Log(LogLevel logLevel, EventId eventId, string? state = null, string? sessionId = null, Exception? exception = null, CancellationToken token = default)
-        //{
-        //    await _connection.InvokeAsync("Log", logLevel, eventId, state, sessionId, exception, token);
-        //}
 
         public async Task<T?> Start<T>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default) where T : class
         {
@@ -78,7 +74,7 @@ namespace WilsonEvoModuleLibrary.Hubs
                     await _connection.StartAsync(cancellationToken);
                     if (_connection.State == HubConnectionState.Connected)
                     {
-                        await _connection.InvokeAsync("RegisterServicesDAQ", _configuration,
+                        await _connection.InvokeAsync("RegisterServices", _configuration,
                             cancellationToken: cancellationToken);
 
                         return;
