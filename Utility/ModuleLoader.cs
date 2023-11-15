@@ -82,12 +82,13 @@ public static class ModuleLoader
         }
 
         var configuration = new ModelsConfiguration();
+        var map = new ServiceMappings();
         Log.Information("Loading task definitions...");
         configuration.Tasks = new Dictionary<string, TaskAttribute>();
         foreach (var type in GetTypesWithAttribute<TaskAttribute>(GetAssembliesWithoutModule()))
         {
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
-            configuration.Tasks.Add(type.FullName, task);
+            configuration.Tasks.Add(type.Name, task);
             Log.Information($"   -{type.Name}", " Loaded");
         }
 
@@ -107,16 +108,18 @@ public static class ModuleLoader
             var args = interfaceService.GenericTypeArguments;
             if (args.Length == 1)
             {
-                configuration.Network.Network.Add(args[0].Name, string.Empty);
+                map.ServiceMap.TryAdd(new MapPath(args[0].Name, string.Empty), interfaceService);
+                configuration.Network.Network.Add(new NetworkNode(){TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName});
                 Log.Information($"   -{args[0].Name}", " Loaded");
             }
             else if (args.Length == 2)
             {
-                configuration.Network.Network.Add(args[0].Name,args[1].Name);
+                map.ServiceMap.TryAdd(new MapPath(args[0].Name, args[1].Name), interfaceService);
+                configuration.Network.Network.Add(new NetworkNode() { TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName, ChannelControllerTypeName = args[1].Name , ChannelControllerTypeFullName = args[1].FullName });
                 Log.Information($"   -{args[0].Name}.{args[1].Name}", " Loaded");
             }
         }
-
+        services.AddSingleton(map);
         services.AddSingleton(configuration);
     }
 

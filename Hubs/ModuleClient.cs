@@ -48,7 +48,7 @@ namespace WilsonEvoModuleLibrary.Hubs
         public async Task<T?> Start<T>(object channel, string shortUrl, SessionData session = null, CancellationToken token = default) where T : class
         {
             session ??= new SessionData();
-            session.ChannelType = channel.GetType().FullName ?? string.Empty;
+            session.ChannelType = channel.GetType().Name ?? string.Empty;
             session.CurrentShortUrl = shortUrl;
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
             return response.GetResponse<T>();

@@ -14,6 +14,7 @@ using FluentResults;
 using ReadOnlyAttribute = BlazorDynamicFormGenerator.ReadOnlyAttribute;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
+using System.Collections.Concurrent;
 
 namespace WilsonEvoModuleLibrary.Services;
 
@@ -22,14 +23,16 @@ public sealed class NodeServiceMapper
     private readonly Dictionary<ulong, Type> _services;
     private readonly Dictionary<string, Type> _servicesmap;
     private readonly IServiceProvider _servicesProvider;
+    private readonly ServiceMappings _map;
 
-    public NodeServiceMapper(IServiceProvider service)
+    public NodeServiceMapper(IServiceProvider service, ServiceMappings map)
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
         _servicesProvider = service;
         _services = new Dictionary<ulong, Type>();
         _servicesmap = new Dictionary<string, Type>();
-        AddService(ModuleLoader.GetNodeService(AppDomain.CurrentDomain.GetAssemblies()));
+        //AddService(ModuleLoader.GetNodeService(AppDomain.CurrentDomain.GetAssemblies()));
+        _map = map;
     }
 
     public Dictionary<string,ModuleNodeDefinition> GetDefinitions()
@@ -77,31 +80,45 @@ public sealed class NodeServiceMapper
         var node = await ReadSessionData(request);
         var response = new ServiceResponse();
         var output = "ok";
-        var type = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x=>x.GetTypes()).SingleOrDefault(x=>x.FullName == session.ChannelType);
-        var serviceType = GetService(node.GetType(), type); 
-        var service = serviceType is not null ? _servicesProvider.GetService(ModuleLoader.GetNodeServiceInterface(serviceType)) : null;
-        if (service is IExecutionService syncService)
+        //TODO create a static index
+        //var type = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x=>x.GetTypes()).SingleOrDefault(x=>x.Name == session.ChannelType);
+        if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, request.SessionData.ChannelType),
+                out var serviceType))
         {
-            await syncService.Execute(in node, ref session, ref output);
-        }
-        else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
-        {
-            await asyncService.Execute(in node, ref session, ref output);
-            session.WaitingCallback = true;
-            session.ContinueExecution = false;
-        }
-        else if (service is IAsyncExecutionService asyncServiceCallback && session.WaitingCallback)
-        {
-            await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
-            session.WaitingCallback = false;
-        }
-        else
-        {
-            //this is shit where i go?
+            session.Exception = "Missing service from module.";
             session.ContinueExecution = false;
             session.WaitingCallback = false;
             session.IsFaulted = true;
-            session.Exception = "Module service not found.";
+        }
+        else
+        {
+            //var serviceType = GetService(node.GetType(), type); 
+            var service = serviceType is not null
+                ? _servicesProvider.GetService(ModuleLoader.GetNodeServiceInterface(serviceType))
+                : null;
+            if (service is IExecutionService syncService)
+            {
+                await syncService.Execute(in node, ref session, ref output);
+            }
+            else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
+            {
+                await asyncService.Execute(in node, ref session, ref output);
+                session.WaitingCallback = true;
+                session.ContinueExecution = false;
+            }
+            else if (service is IAsyncExecutionService asyncServiceCallback && session.WaitingCallback)
+            {
+                await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
+                session.WaitingCallback = false;
+            }
+            else
+            {
+                //this is shit where i go?
+                session.ContinueExecution = false;
+                session.WaitingCallback = false;
+                session.IsFaulted = true;
+                session.Exception = "Module service not found.";
+            }
         }
 
         session.CurrentOutput = output;
@@ -124,49 +141,49 @@ public sealed class NodeServiceMapper
         return null;   
     }
 
-    private void AddService(IEnumerable<Type> services)
-    {
-        foreach (var type in services)
-        {
-            var interfaceService = ModuleLoader.GetNodeServiceInterface(type);
-            var lookup = ulong.MaxValue;
-            var args = interfaceService.GenericTypeArguments;
-            if (args.Length == 1)
-            {
-                lookup = Decode(args[0].GetHashCode(), 0);
-                if (!_servicesmap.TryAdd(args[0].Name, args[0]))
-                    throw new Exception("NodeServiceMapper, possible collision on service type");
-            }
-            else if (args.Length == 2)
-            {
-                lookup = Decode(args[0].GetHashCode(), args[1].GetHashCode());
-                if (!_servicesmap.TryAdd(args[0].Name, args[0]))
-                    throw new Exception("NodeServiceMapper, possible collision on service type");
-            }
+    //private void AddService(IEnumerable<Type> services)
+    //{
+    //    foreach (var type in services)
+    //    {
+    //        var interfaceService = ModuleLoader.GetNodeServiceInterface(type);
+    //        var lookup = ulong.MaxValue;
+    //        var args = interfaceService.GenericTypeArguments;
+    //        if (args.Length == 1)
+    //        {
+    //            lookup = Decode(args[0].GetHashCode(), 0);
+    //            if (!_servicesmap.TryAdd(args[0].Name, args[0]))
+    //                throw new Exception("NodeServiceMapper, possible collision on service type");
+    //        }
+    //        else if (args.Length == 2)
+    //        {
+    //            lookup = Decode(args[0].GetHashCode(), args[1].GetHashCode());
+    //            if (!_servicesmap.TryAdd(args[0].Name, args[0]))
+    //                throw new Exception("NodeServiceMapper, possible collision on service type");
+    //        }
 
-            if (lookup == ulong.MaxValue) throw new Exception("NodeServiceMapper, error lookup id is invalid");
+    //        if (lookup == ulong.MaxValue) throw new Exception("NodeServiceMapper, error lookup id is invalid");
 
-            if (!_services.TryAdd(lookup, type))
-                throw new Exception("NodeServiceMapper, possible collision on service type");
+    //        if (!_services.TryAdd(lookup, type))
+    //            throw new Exception("NodeServiceMapper, possible collision on service type");
             
-        }
-    }
+    //    }
+    //}
 
-    private Type? GetService(Type t, Type s)
-    {
-        var idSingle = Decode(t.GetHashCode(), 0);
-        if (_services.TryGetValue(idSingle, out var type))
-            return type;
-        if (s == null) return null;
-        var idMultiple = Decode(t.GetHashCode(), s.GetHashCode());
-        if (_services.TryGetValue(idMultiple, out var mType))
-            return mType;
-        return null;
-    }
+    //private Type? GetService(Type t, Type s)
+    //{
+    //    var idSingle = Decode(t.GetHashCode(), 0);
+    //    if (_services.TryGetValue(idSingle, out var type))
+    //        return type;
+    //    if (s == null) return null;
+    //    var idMultiple = Decode(t.GetHashCode(), s.GetHashCode());
+    //    if (_services.TryGetValue(idMultiple, out var mType))
+    //        return mType;
+    //    return null;
+    //}
 
-    private ulong Decode(int x, int y)
-    {
-        var id = x > y ? (uint) y | ((ulong) x << 32) : (uint) x | ((ulong) y << 32);
-        return id;
-    }
+    //private ulong Decode(int x, int y)
+    //{
+    //    var id = x > y ? (uint) y | ((ulong) x << 32) : (uint) x | ((ulong) y << 32);
+    //    return id;
+    //}
 }
