@@ -28,7 +28,7 @@ namespace WilsonEvoModuleLibrary.Entities
         public bool IsEndedCorrectly { get; set; } = false;
         public string Exception { get; set; } = string.Empty;
         public Dictionary<string, object> VarData { get; set; } = new Dictionary<string, object>();
-
+        private Dictionary<string, int> OperationTracker = new();
 
         public SessionData(){}
 
