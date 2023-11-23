@@ -69,9 +69,10 @@ public sealed class NodeServiceMapper
             var service = scope.ServiceProvider.GetService(serviceType);
             //TODO: add verification for the type
             var node = await ReadSessionData(request, serviceType.GenericTypeArguments[0]);
+
             if (service is IExecutionService syncService)
             {
-                await syncService.Execute(in node, ref session, ref output);
+                await syncService.Execute(in node, ref session ,ref output);
             }
             else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
             {

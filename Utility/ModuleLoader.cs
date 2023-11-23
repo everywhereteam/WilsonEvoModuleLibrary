@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using Serilog;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Entities;
@@ -17,6 +18,11 @@ using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
+public static class WilsonSettings
+{
+    public static JsonSerializer NewtonsoftSerializer { get; set; }
+}
+
 public static class ModuleLoader
 {
     private static readonly Type[] ServiceType =
@@ -27,8 +33,16 @@ public static class ModuleLoader
         typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>)
     };
 
+    public static void AddWilsonSerializationSettings(this IServiceCollection services, Action<JsonSerializerSettings> settingsAction)
+    {
+        JsonSerializerSettings settings = new JsonSerializerSettings();
+        settingsAction.Invoke(settings);      
+        WilsonSettings.NewtonsoftSerializer = JsonSerializer.Create(settings);
+    }
+
     public static void AddWilsonCore(this IServiceCollection services, string apiKey)
     {
+        WilsonSettings.NewtonsoftSerializer = JsonSerializer.Create();
 #if DEBUG
         var url = "https://localhost:7080/hub/module";
 #else
