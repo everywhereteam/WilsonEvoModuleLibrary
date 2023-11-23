@@ -1,13 +1,15 @@
-﻿namespace WilsonEvoModuleLibrary.Entities
-{
-    public class ServiceResponse
-    {
-        public SessionData SessionData { get; set; }
+﻿namespace WilsonEvoModuleLibrary.Entities;
 
-        public ServiceResponse() { }
-        public ServiceResponse(SessionData sessionData)
-        {
-            SessionData = sessionData;
-        }
+public class ServiceResponse
+{
+    public ServiceResponse()
+    {
     }
+
+    public ServiceResponse(SessionData sessionData)
+    {
+        SessionData = sessionData;
+    }
+
+    public SessionData SessionData { get; set; }
 }

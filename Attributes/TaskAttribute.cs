@@ -1,13 +1,13 @@
-﻿using BlazorDynamicFormGenerator;
-using System;
-using WilsonEvoModuleLibrary.Common;
+﻿using System;
+using BlazorDynamicFormGenerator;
 
 namespace WilsonEvoModuleLibrary.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public class TaskAttribute : Attribute
 {
-    public TaskAttribute(string name, string category, string cssIcon, string cssNode, string description, string documentationUrl,
+    public TaskAttribute(string name, string category, string cssIcon, string cssNode, string description,
+        string documentationUrl,
         bool hasDynamicOutput, params string[] defaultOutputs)
     {
         Name = name;
@@ -28,7 +28,7 @@ public class TaskAttribute : Attribute
         DefaultOutputs = defaultOutputs;
         Description = description;
         HasDynamicOutput = hasDynamicOutput;
-        DocumentationUrl = documentationUrl;  
+        DocumentationUrl = documentationUrl;
     }
 
     public TaskAttribute(string name, string category, params string[] defaultOutputs)
@@ -38,7 +38,9 @@ public class TaskAttribute : Attribute
         DefaultOutputs = defaultOutputs;
     }
 
-    public TaskAttribute(){}
+    public TaskAttribute()
+    {
+    }
 
 
     public string Name { get; set; }

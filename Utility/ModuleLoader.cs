@@ -2,16 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Security;
 using System.Reflection;
-using System.Text;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Serilog.Core;
-using Serilog.Sinks.SystemConsole.Themes;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Hubs;
@@ -24,21 +19,29 @@ namespace WilsonEvoModuleLibrary.Utility;
 
 public static class ModuleLoader
 {
+    private static readonly Type[] ServiceType =
+        { typeof(NodeService<>), typeof(NodeServices<,>), typeof(AsyncNodeService<>), typeof(AsyncNodeServices<,>) };
+
+    private static readonly Type[] ServiceInterfaceType =
+    {
+        typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>)
+    };
+
     public static void AddWilsonCore(this IServiceCollection services, string apiKey)
     {
-
 #if DEBUG
         var url = "https://localhost:7080/hub/module";
 #else
         var url = "https://core.gestewwai.it/hub/module";
 #endif
         //Console.SetOut(new LogTextWriter(Console.Out));
-        string logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
-        string sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
+        var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
+        var sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .WriteTo.Console()
-            .WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
+            .WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7)
             .CreateLogger();
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog());
         Log.Information(@"
@@ -57,21 +60,20 @@ public static class ModuleLoader
 ");
 
         //TODO: test
-        services.AddSingleton<ILogger>(Log.Logger);
+        services.AddSingleton(Log.Logger);
         services.LoadConfiguration();
         services.AddSingleton<ModuleClient>();
         services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
-        services.AddHostedService<ModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
+        services.AddHostedService(provider => provider.GetRequiredService<ModuleClient>());
         services.AddSingleton<NodeServiceMapper>();
-        services.AddSingleton<IHubConnectionBuilder>(new HubConnectionBuilder().WithUrl(url, options =>
-        {          
-
+        services.AddSingleton(new HubConnectionBuilder().WithUrl(url, options =>
+        {
             options.Transports = HttpTransportType.WebSockets;
             options.Headers.Add("api-key", apiKey);
         }).AddNewtonsoftJsonProtocol());
     }
 
-    static void LoadConfiguration(this IServiceCollection services)
+    private static void LoadConfiguration(this IServiceCollection services)
     {
         Log.Information("Loading service...");
         foreach (var type in GetNodeService(GetAssembliesWithoutModule()))
@@ -101,24 +103,30 @@ public static class ModuleLoader
         }
 
         Log.Information("Loading network definitions...");
-        configuration.Network = new NetworkDefinition();   
+        configuration.Network = new NetworkDefinition();
         foreach (var type in GetNodeService(AppDomain.CurrentDomain.GetAssemblies()))
         {
-            var interfaceService = ModuleLoader.GetNodeServiceInterface(type);
+            var interfaceService = GetNodeServiceInterface(type);
             var args = interfaceService.GenericTypeArguments;
             if (args.Length == 1)
             {
                 map.ServiceMap.TryAdd(new MapPath(args[0].Name, string.Empty), interfaceService);
-                configuration.Network.Network.Add(new NetworkNode(){TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName});
+                configuration.Network.Network.Add(new NetworkNode
+                    { TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName });
                 Log.Information($"   -{args[0].Name}", " Loaded");
             }
             else if (args.Length == 2)
             {
                 map.ServiceMap.TryAdd(new MapPath(args[0].Name, args[1].Name), interfaceService);
-                configuration.Network.Network.Add(new NetworkNode() { TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName, ChannelControllerTypeName = args[1].Name , ChannelControllerTypeFullName = args[1].FullName });
+                configuration.Network.Network.Add(new NetworkNode
+                {
+                    TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName,
+                    ChannelControllerTypeName = args[1].Name, ChannelControllerTypeFullName = args[1].FullName
+                });
                 Log.Information($"   -{args[0].Name}.{args[1].Name}", " Loaded");
             }
         }
+
         services.AddSingleton(map);
         services.AddSingleton(configuration);
     }
@@ -130,13 +138,12 @@ public static class ModuleLoader
         return assemblies;
     }
 
-    private static readonly Type[] ServiceType = { typeof(NodeService<>), typeof(NodeServices<,>), typeof(AsyncNodeService<>), typeof(AsyncNodeServices<,>) };
-    private static readonly Type[] ServiceInterfaceType = { typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>) };
 
-
-    public static IEnumerable<Type> GetTypesWithAttribute<TAttribute>(IEnumerable<Assembly> assemblies) where TAttribute : Attribute
+    public static IEnumerable<Type> GetTypesWithAttribute<TAttribute>(IEnumerable<Assembly> assemblies)
+        where TAttribute : Attribute
     {
-        return assemblies.SelectMany(x => x.GetTypes()).Where(type => type.GetCustomAttributes(typeof(TAttribute), false).Length > 0);
+        return assemblies.SelectMany(x => x.GetTypes())
+            .Where(type => type.GetCustomAttributes(typeof(TAttribute), false).Length > 0);
     }
 
     public static IEnumerable<Type> GetNodeService(IEnumerable<Assembly> assemblies)
@@ -148,9 +155,12 @@ public static class ModuleLoader
                         t.BaseType is { IsGenericType: true } &&
                         ServiceType.Contains(t.BaseType.GetGenericTypeDefinition()));
     }
+
     public static IEnumerable<Type> GetNodeServiceInterface(IEnumerable<Type> types)
     {
-        return types.Select(x => x.GetInterfaces().First(i => i.IsGenericType && ServiceInterfaceType.Contains(i.GetGenericTypeDefinition())));
+        return types.Select(x =>
+            x.GetInterfaces().First(i =>
+                i.IsGenericType && ServiceInterfaceType.Contains(i.GetGenericTypeDefinition())));
     }
 
     public static Type GetNodeServiceInterface(Type type)

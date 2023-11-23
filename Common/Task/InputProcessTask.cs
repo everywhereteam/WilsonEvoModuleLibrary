@@ -5,7 +5,7 @@ using WilsonEvoModuleLibrary.Entities;
 
 namespace WilsonEvoModuleLibrary.Common.Task;
 
-[Task("Input", Categories.IO, Output.Ok, Output.Error, Output.Timeout)]
+[Task("Input", Categories.Io, Output.Ok, Output.Error, Output.Timeout)]
 public class InputTask : BaseTask
 {
     [Display(Name = "Message"), DataType(DataType.Text)]
