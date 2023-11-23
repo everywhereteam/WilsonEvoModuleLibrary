@@ -79,14 +79,14 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         session.ChannelType = channel.GetType().Name ?? string.Empty;
         session.CurrentShortUrl = shortUrl;
         var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-        return response.ResponseByte.ToObject<T>() ;//.GetResponse<T>();
+        return response.Response.ToObject<T>() ;//.GetResponse<T>();
     }
 
     public async Task<T?> Next<T>(string sessionId, object response, CancellationToken token = default)
         where T : class
     {
         var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
-        return result.ResponseByte as T; //.GetResponse<T>();
+        return result.Response as T; //.GetResponse<T>();
     }
 
     private async Task Closed(Exception? error)

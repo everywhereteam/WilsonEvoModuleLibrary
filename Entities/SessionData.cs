@@ -18,7 +18,7 @@ public class SessionData
     public string ChannelType { get; set; }
     public string Output { get; set; }
     public JObject Request { get; set; }
-    public JObject ResponseByte { get; set; }
+    public JObject Response { get; set; }
     public string CurrentNodeId { get; set; }
     public string CurrentShortUrl { get; set; }
     public string CurrentOutput { get; set; }
@@ -34,11 +34,11 @@ public class SessionData
    
     //public void SaveResponse<T>(T data)
     //{
-    //    ResponseByte = BinarySerialization.Serialize(data);
+    //    Response = BinarySerialization.Serialize(data);
     //}
 
     //public T? GetResponse<T>() where T : class
     //{
-    //    return ResponseByte is null ? null : BinarySerialization.Deserialize<T>(ResponseByte);
+    //    return Response is null ? null : BinarySerialization.Deserialize<T>(Response);
     //}
 }
