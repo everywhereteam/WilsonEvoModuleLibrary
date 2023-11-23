@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace WilsonEvoModuleLibrary.Entities;
 
-namespace WilsonEvoModuleLibrary.Entities
+public abstract class BaseTask
 {
-    public abstract class BaseTask
-    {
-        public static string[] Outputs { get; set; }
-    }
+    public static string[] Outputs { get; set; }
 }

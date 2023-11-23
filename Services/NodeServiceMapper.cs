@@ -1,34 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
-using BlazorDynamicFormGenerator;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
-using WilsonEvoModuleLibrary.Utility;
-using System.Linq;
-using FluentResults;
-using ReadOnlyAttribute = BlazorDynamicFormGenerator.ReadOnlyAttribute;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
-using System.Collections.Concurrent;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace WilsonEvoModuleLibrary.Services;
 
 public sealed class NodeServiceMapper
 {
-    private readonly IServiceProvider _servicesProvider;
-    private readonly ServiceMappings _map;
     private readonly ModelsConfiguration _config;
+    private readonly ServiceMappings _map;
+    private readonly IServiceProvider _servicesProvider;
 
     public NodeServiceMapper(IServiceProvider service, ServiceMappings map, ModelsConfiguration config)
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-        _servicesProvider = service;                                                       
+        _servicesProvider = service;
         _map = map;
         _config = config;
     }
@@ -62,10 +52,11 @@ public sealed class NodeServiceMapper
     public async Task<ServiceResponse> ExecuteService(ServiceRequest request)
     {
         var session = request.SessionData;
-       
+
         var response = new ServiceResponse();
         var output = "ok";
-        if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, request.SessionData.ChannelType), out var serviceType))
+        if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, request.SessionData.ChannelType),
+                out var serviceType))
         {
             session.Exception = "Missing service from module.";
             session.ContinueExecution = false;
@@ -109,7 +100,7 @@ public sealed class NodeServiceMapper
     }
 
     private async Task<object?> ReadSessionData(ServiceRequest request, Type? type)
-    {                      
+    {
         var ms = new MemoryStream(request.NodeData);
         await using var reader = new BsonDataReader(ms);
         var o = (JObject)await JToken.ReadFromAsync(reader);
