@@ -43,9 +43,9 @@ public static class ModuleLoader
         var sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
-            .MinimumLevel.Information()
+            .MinimumLevel.Verbose()
 #else
-            .MinimumLevel.Error()
+            .MinimumLevel.Information()
 #endif                                  
             .WriteTo.Console()
             .WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day,
@@ -55,9 +55,9 @@ public static class ModuleLoader
         builder.Host.UseSerilog((host, logger) =>
         {
 #if DEBUG
-            logger.MinimumLevel.Information();
+            logger.MinimumLevel.Verbose();
 #else
-            logger.MinimumLevel.Error();
+            logger.MinimumLevel.Information();
 #endif
             logger.WriteTo.Console();
             logger.WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day,
