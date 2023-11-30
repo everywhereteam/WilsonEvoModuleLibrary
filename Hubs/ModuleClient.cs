@@ -1,21 +1,15 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
+using FluentResults;
+using Microsoft.AspNetCore.SignalR.Client;        
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services;
+using WilsonEvoModuleLibrary.Utility;                                
 
 namespace WilsonEvoModuleLibrary.Hubs;
-
-public class CustomRetryPolicy : IRetryPolicy
-{
-    public TimeSpan? NextRetryDelay(RetryContext retryContext)
-    {
-        return TimeSpan.FromSeconds(5);
-    }
-}
 
 public sealed class ModuleClient : IHostedService, IModuleClient
 {
@@ -35,6 +29,9 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         _connection = hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy()).Build();
         _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
         _connection.Closed += Closed;
+        _connection.ServerTimeout = TimeSpan.FromSeconds(25);
+        _connection.HandshakeTimeout = TimeSpan.FromSeconds(25);
+       // _connection.KeepAliveInterval = TimeSpan.FromSeconds(10);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -72,21 +69,30 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         return await _mapper.ExecuteService(request);
     }
 
-    public async Task<T?> Start<T>(object channel, string shortUrl, SessionData? session = null,
+    public async Task<Result<T?>> Start<T>(object channel, string shortUrl, SessionData? session = null,
         CancellationToken token = default) where T : class
     {
         session ??= new SessionData();
         session.ChannelType = channel.GetType().Name ?? string.Empty;
         session.CurrentShortUrl = shortUrl;
-        var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-        return response.GetResponse<T>() ;//.GetResponse<T>();
+        try
+        {
+            var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
+           
+            //return Result.Ok(Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Newtonsoft.Json.JsonConvert.SerializeObject(response.Response)));
+            return Result.Ok(BinarySerialization.Deserialize<T>(response.Response));
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Error comunicationg with the server. {ex.StackTrace}");
+        }
     }
 
     public async Task<T?> Next<T>(string sessionId, object response, CancellationToken token = default)
         where T : class
     {
         var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
-        return result.GetResponse<T>(); //.GetResponse<T>();
+        return BinarySerialization.Deserialize<T>(result.Response); //.GetResponse<T>();
     }
 
     private async Task Closed(Exception? error)

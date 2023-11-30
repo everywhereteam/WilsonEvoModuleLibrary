@@ -1,5 +1,7 @@
 ﻿using System;
 using BlazorDynamicFormGenerator;
+using MessagePack;
+using MessagePack.Formatters;
 
 namespace WilsonEvoModuleLibrary.Attributes;
 
@@ -41,17 +43,20 @@ public class TaskAttribute : Attribute
     public TaskAttribute()
     {
     }
-
-
     public string Name { get; set; }
+
     public string Category { get; set; }
+
     public string[] DefaultOutputs { get; set; }
+
     public string Description { get; set; }
+
     public string CssIcon { get; set; }
+
     public string CssNode { get; set; }
+
     public string DocumentationUrl { get; set; }
 
     public bool HasDynamicOutput { get; set; }
-
     public ModuleNodeDefinition? Definition { get; set; } = null;
 }

@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using MessagePack;
+using MessagePack.Formatters;
 using Newtonsoft.Json.Linq;
-using WilsonEvoModuleLibrary.Utility;                            
+using WilsonEvoModuleLibrary.Utility;
 
 namespace WilsonEvoModuleLibrary.Entities;
-
+                     
 public class SessionData
 {
     public int ProcessId { get; set; }
@@ -14,11 +17,11 @@ public class SessionData
     public string From { get; set; }
     public string To { get; set; }
     public bool Test { get; set; }
-   
     public string ChannelType { get; set; }
+    public Dictionary<string, byte[]?> ServiceSecrets { get; set; } = new();
     public string Output { get; set; }
-    public JObject? Request { get; set; }
-    public JObject? Response { get; set; }
+    public byte[] Request { get; set; }
+    public byte[] Response { get; set; }
     public string CurrentNodeId { get; set; }
     public string CurrentShortUrl { get; set; }
     public string CurrentOutput { get; set; }
@@ -31,24 +34,5 @@ public class SessionData
     public Dictionary<string, object> VarData { get; set; } = new();
     public Dictionary<string, int> OperationTracker { get; set; } = new();
 
-    public void SetResponse<T>(T obj) 
-    {
-        Response = (obj is null)? null : JObject.FromObject(obj, WilsonSettings.NewtonsoftSerializer);
-    }
-
-    public T? GetResponse<T>()
-    {
-        return (Response is null) ? (T?)Activator.CreateInstance(typeof(T)) : Response.ToObject<T>(WilsonSettings.NewtonsoftSerializer);
-    }
-
-    public T? GetRequest<T>()
-    {
-        return (Request is null) ? (T?)Activator.CreateInstance(typeof(T)) : Request.ToObject<T>(WilsonSettings.NewtonsoftSerializer);
-    }
-
-    public void SetRequest<T>(T obj)
-    {
-        Request = (obj is null) ? null : JObject.FromObject(obj, WilsonSettings.NewtonsoftSerializer);
-    }
 
 }

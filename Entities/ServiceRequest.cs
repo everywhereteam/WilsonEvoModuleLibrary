@@ -15,7 +15,7 @@ public class ServiceRequest
         Type = type;
     }
 
-    public Dictionary<string, byte[]?> ChannelSecrets { get; set; } = new();
+    
     public SessionData SessionData { get; set; }
     public byte[] NodeData { get; set; }
     public string Type { get; set; }

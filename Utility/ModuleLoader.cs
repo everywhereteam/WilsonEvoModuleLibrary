@@ -2,13 +2,22 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+using MessagePack;
+using MessagePack.Formatters;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Serilog;
 using WilsonEvoModuleLibrary.Attributes;
+using WilsonEvoModuleLibrary.Configuration;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Hubs;
 using WilsonEvoModuleLibrary.Network;
@@ -17,11 +26,6 @@ using WilsonEvoModuleLibrary.Services.Core;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Utility;
-
-public static class WilsonSettings
-{
-    public static JsonSerializer NewtonsoftSerializer { get; set; }
-}
 
 public static class ModuleLoader
 {
@@ -33,31 +37,55 @@ public static class ModuleLoader
         typeof(INodeService<>), typeof(INodeServices<,>), typeof(IAsyncNodeService<>), typeof(IAsyncNodeServices<,>)
     };
 
-    public static void AddWilsonSerializationSettings(this IServiceCollection services, Action<JsonSerializerSettings> settingsAction)
+    public static void UseWilsonDebug(this WebApplicationBuilder builder)
     {
-        JsonSerializerSettings settings = new JsonSerializerSettings();
-        settingsAction.Invoke(settings);      
-        WilsonSettings.NewtonsoftSerializer = JsonSerializer.Create(settings);
-    }
-
-    public static void AddWilsonCore(this IServiceCollection services, string apiKey)
-    {
-        WilsonSettings.NewtonsoftSerializer = JsonSerializer.Create();
-#if DEBUG
-        var url = "https://localhost:7080/hub/module";
-#else
-        var url = "https://core.gestewwai.it/hub/module";
-#endif
-        //Console.SetOut(new LogTextWriter(Console.Out));
         var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
         var sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
+#if DEBUG
+            .MinimumLevel.Information()
+#else
+            .MinimumLevel.Error()
+#endif                                  
             .WriteTo.Console()
             .WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7)
             .CreateLogger();
-        services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog());
+
+        builder.Host.UseSerilog((host, logger) =>
+        {
+#if DEBUG
+            logger.MinimumLevel.Information();
+#else
+            logger.MinimumLevel.Error();
+#endif
+            logger.WriteTo.Console();
+            logger.WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7);
+        });
+    }
+
+    public static void UseWilsonCore(this WebApplicationBuilder builder, Action<JsonSerializerSettings> serializerSettings = null)
+    {
+        builder.UseWilsonDebug();
+        var settings = new JsonSerializerSettings();
+        serializerSettings?.Invoke(settings);
+        WilsonSettings.NewtonsoftSerializer = JsonSerializer.Create(settings);
+
+        var moduleConfig = builder.Configuration.GetSection("WilsonConfig").Get<WilsonConfig>() ?? new WilsonConfig();
+        if (string.IsNullOrWhiteSpace(moduleConfig.Token))
+            throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
+
+#if DEBUG
+        var url = "https://localhost:44335/hub/module";
+#else
+        var url = "https://core.gestewwai.it/hub/module";
+        //url = "https://localhost:44335/hub/module";
+#endif
+
+
+
+
         Log.Information(@"
  _       ___ __                    ___          _    __  ___          __      __        
 | |     / (_) /________  ____     /   |  ____  (_)  /  |/  /___  ____/ /_  __/ /__      
@@ -73,18 +101,53 @@ public static class ModuleLoader
 
 ");
 
-        //TODO: test
-        services.AddSingleton(Log.Logger);
-        services.LoadConfiguration();
-        services.AddSingleton<ModuleClient>();
-        services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
-        services.AddHostedService(provider => provider.GetRequiredService<ModuleClient>());
-        services.AddSingleton<NodeServiceMapper>();
-        services.AddSingleton(new HubConnectionBuilder().WithUrl(url, options =>
+
+        builder.Services.LoadConfiguration();
+        builder.Services.AddSingleton<ModuleClient>();
+        builder.Services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
+        builder.Services.AddHostedService(provider => provider.GetRequiredService<ModuleClient>());
+        builder.Services.AddSingleton<NodeServiceMapper>();
+        builder.Services.AddSingleton(new HubConnectionBuilder().WithUrl(url, options =>
         {
             options.Transports = HttpTransportType.WebSockets;
-            options.Headers.Add("api-key", apiKey);
-        }).AddNewtonsoftJsonProtocol());
+            // options.AccessTokenProvider??
+
+            options.SkipNegotiation = true;
+            options.ApplicationMaxBufferSize = 10_000_000;
+            options.ClientCertificates = new X509CertificateCollection();
+            options.Cookies = new CookieContainer();
+            options.CloseTimeout = TimeSpan.FromSeconds(5);
+            options.DefaultTransferFormat = TransferFormat.Text; //check the other one
+            options.Credentials = null;
+            options.Proxy = null;
+            options.UseDefaultCredentials = true;
+            options.TransportMaxBufferSize = 10_000_000;
+            options.WebSocketConfiguration = null; //TOCHEKC
+            options.WebSocketFactory = null;
+            options.Headers.Add("api-key", moduleConfig.Token);
+
+        }).ConfigureLogging((logging) =>
+        {
+#if DEBUG
+            logging.SetMinimumLevel(LogLevel.Trace);
+            logging.AddConsole();
+#endif
+        }).AddMessagePackProtocol(conf =>
+        {
+            var resolver = MessagePack.Resolvers.CompositeResolver.Create(
+                 new IMessagePackFormatter[] { },
+                 new IFormatterResolver[]
+                 {
+                    MessagePack.Resolvers.ContractlessStandardResolver.Instance
+                 });
+            conf.SerializerOptions = MessagePackSerializerOptions.Standard
+             .WithResolver(resolver)
+                .WithSecurity(MessagePackSecurity.UntrustedData)
+                .WithCompression(MessagePackCompression.Lz4Block)
+                .WithAllowAssemblyVersionMismatch(true)
+                .WithOldSpec()
+                .WithOmitAssemblyVersion(true);
+        }));
     }
 
     private static void LoadConfiguration(this IServiceCollection services)
@@ -126,7 +189,7 @@ public static class ModuleLoader
             {
                 map.ServiceMap.TryAdd(new MapPath(args[0].Name, string.Empty), interfaceService);
                 configuration.Network.Network.Add(new NetworkNode
-                    { TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName });
+                { TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName });
                 Log.Information($"   -{args[0].Name}", " Loaded");
             }
             else if (args.Length == 2)
@@ -134,8 +197,10 @@ public static class ModuleLoader
                 map.ServiceMap.TryAdd(new MapPath(args[0].Name, args[1].Name), interfaceService);
                 configuration.Network.Network.Add(new NetworkNode
                 {
-                    TaskTypeName = args[0].Name, TaskTypeFullName = args[0].FullName,
-                    ChannelControllerTypeName = args[1].Name, ChannelControllerTypeFullName = args[1].FullName
+                    TaskTypeName = args[0].Name,
+                    TaskTypeFullName = args[0].FullName,
+                    ChannelControllerTypeName = args[1].Name,
+                    ChannelControllerTypeFullName = args[1].FullName
                 });
                 Log.Information($"   -{args[0].Name}.{args[1].Name}", " Loaded");
             }
