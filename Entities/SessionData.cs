@@ -27,6 +27,7 @@ public class SessionData
     public string Exception { get; set; } = string.Empty;
     public Dictionary<string, object> VarData { get; set; } = new();
     public Dictionary<string, int> OperationTracker { get; set; } = new();
+    public Dictionary<string, string> ChannelData { get; set; } = new();
 
 
 }
