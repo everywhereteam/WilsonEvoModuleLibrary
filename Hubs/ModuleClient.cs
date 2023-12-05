@@ -87,7 +87,8 @@ public sealed class ModuleClient : IHostedService, IModuleClient
 
     public async Task<Result<SessionData>> Next(string sessionId, object response, CancellationToken token = default)
     {
-        var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
+        var rawBin = response != null? BinarySerialization.Serialize(response): null;
+        var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, rawBin, token);
         return result != null ? Result.Ok(result) : Result.Fail("Session data null");
     }
 
