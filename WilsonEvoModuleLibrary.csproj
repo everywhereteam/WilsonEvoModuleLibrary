@@ -6,7 +6,7 @@
     <LangVersion>preview</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageProjectUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</PackageProjectUrl>
-	<VersionPrefix>1.0.89</VersionPrefix>
+	<VersionPrefix>1.0.90</VersionPrefix>
     <PackageTags>Wilson;</PackageTags>
     <RepositoryUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

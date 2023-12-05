@@ -69,8 +69,7 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         return await _mapper.ExecuteService(request);
     }
 
-    public async Task<Result<T?>> Start<T>(object channel, string shortUrl, SessionData? session = null,
-        CancellationToken token = default) where T : class
+    public async Task<Result<SessionData>> Start(object channel, string shortUrl, SessionData? session = null, CancellationToken token = default)
     {
         session ??= new SessionData();
         session.ChannelType = channel.GetType().Name ?? string.Empty;
@@ -78,9 +77,7 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         try
         {
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-           
-            //return Result.Ok(Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Newtonsoft.Json.JsonConvert.SerializeObject(response.Response)));
-            return Result.Ok(BinarySerialization.Deserialize<T>(response.Response));
+            return response != null ? Result.Ok(response) : Result.Fail("Session data null");
         }
         catch (Exception ex)
         {
@@ -88,11 +85,10 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         }
     }
 
-    public async Task<T?> Next<T>(string sessionId, object response, CancellationToken token = default)
-        where T : class
+    public async Task<Result<SessionData>> Next(string sessionId, object response, CancellationToken token = default)
     {
         var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, response, token);
-        return BinarySerialization.Deserialize<T>(result.Response); //.GetResponse<T>();
+        return result != null ? Result.Ok(result) : Result.Fail("Session data null");
     }
 
     private async Task Closed(Exception? error)
