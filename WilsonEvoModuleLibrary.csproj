@@ -6,22 +6,12 @@
     <LangVersion>preview</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageProjectUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</PackageProjectUrl>
-	<VersionPrefix>1.0.92</VersionPrefix>
+	<VersionPrefix>1.0.94</VersionPrefix>
     <PackageTags>Wilson;</PackageTags>
     <RepositoryUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>Everywhere srl</Copyright>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Monikers.imagemanifest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <content Include="Monikers.imagemanifest">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </content>
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BlazorDynamicFormGenerator" Version="1.0.5" />
