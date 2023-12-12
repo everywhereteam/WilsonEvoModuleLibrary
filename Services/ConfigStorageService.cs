@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Caching.Memory;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Utility;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WilsonEvoModuleLibrary.Services
 {
@@ -40,20 +41,20 @@ namespace WilsonEvoModuleLibrary.Services
             {
                 var raw = session.ServiceSecrets[typeof(T).Name];
                 if (raw == null)
-                {
+                {                                     
                     return Result.Fail($"The configuration is empty or null for the type: {typeof(T).Name}");
                 }
 
                 var obj = BinarySerialization.Deserialize<T>(raw);
                 if (obj == null)
-                {
+                {                                    
                     return Result.Fail($"The configuration for the type: {typeof(T).Name} deserialized is null.");
                 }
                 _cache.Set(key, obj);
                 return Result.Ok(obj);
             }
             else
-            {
+            {                                    
                 return Result.Fail($"No configuration found for the type: {typeof(T).Name}");
             }
         }

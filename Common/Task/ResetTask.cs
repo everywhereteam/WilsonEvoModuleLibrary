@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Common.Values;
+using WilsonEvoModuleLibrary.Entities;
 
-namespace WilsonEvoModuleLibrary.Common.Task
+namespace WilsonEvoModuleLibrary.Common.Task;
+
+[Task("Reset", Categories.Flow, Output.Ok, Output.Error)]
+public class ResetTask : BaseTask
 {
-    [Task("Reset", Categories.Flow, Output.Ok, Output.Error)]
-    public class ResetTask
-    {
-        [Display(Name = "Reason(debug)"), DataType(DataType.Text)]
-        public string Reason { get; set; }
-    }
+    [Display(Name = "Reason(debug)")]
+    [DataType(DataType.Text)]
+    public string Reason { get; set; }
 }
