@@ -3,6 +3,7 @@
 public class Categories
 {
     public const string Io = "I/O";
+    public const string Flow = "Flow";
     public const string Function = "Functions";
     public const string Advanced = "Advanced";
     public const string Utility = "Utility";

@@ -77,7 +77,7 @@ public static class ModuleLoader
             throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
 
 #if DEBUG
-        var url = "https://localhost:44335/hub/module";
+        var url = "https://localhost:44335/hub/module"; 
 #else
         var url = "https://core.gestewwai.it/hub/module";
         //url = "https://localhost:44335/hub/module";
@@ -107,6 +107,8 @@ public static class ModuleLoader
         builder.Services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
         builder.Services.AddHostedService(provider => provider.GetRequiredService<ModuleClient>());
         builder.Services.AddSingleton<NodeServiceMapper>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<IConfigStorageService, ConfigStorageService>();
         builder.Services.AddSingleton(new HubConnectionBuilder().WithUrl(url, options =>
         {
             options.Transports = HttpTransportType.WebSockets;
@@ -170,7 +172,7 @@ public static class ModuleLoader
             configuration.Tasks.Add(type.Name, task);
             Log.Information($"   -{type.Name}", " Loaded");
         }
-
+        //TODO: MISSING CONFIGURATION LOADGIN
         Log.Information("Loading provider configuration...");
         foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>(GetAssembliesWithoutModule()))
         {
