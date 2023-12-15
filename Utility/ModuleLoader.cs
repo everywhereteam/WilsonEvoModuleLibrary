@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using BlazorDynamicFormGenerator;
 using MessagePack;
 using MessagePack.Formatters;
 using Microsoft.AspNetCore.Builder;
@@ -24,6 +25,7 @@ using WilsonEvoModuleLibrary.Network;
 using WilsonEvoModuleLibrary.Services;
 using WilsonEvoModuleLibrary.Services.Core;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
@@ -152,6 +154,11 @@ public static class ModuleLoader
         }));
     }
 
+    private static ModuleNodeDefinition GetDef<T>(T obj)
+    {
+        return ModuleNodePropertyDefinitionExtensions.GetDefinition<T>();
+    }
+
     private static void LoadConfiguration(this IServiceCollection services)
     {
         Log.Information("Loading service...");
@@ -169,6 +176,7 @@ public static class ModuleLoader
         foreach (var type in GetTypesWithAttribute<TaskAttribute>(GetAssembliesWithoutModule()))
         {
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
+            task.Definition = ModuleNodePropertyDefinitionExtensions.GetDefinition(type);
             configuration.Tasks.Add(type.Name, task);
             Log.Information($"   -{type.Name}", " Loaded");
         }
@@ -176,8 +184,11 @@ public static class ModuleLoader
         Log.Information("Loading provider configuration...");
         foreach (var type in GetTypesWithAttribute<TaskProviderAttribute>(GetAssembliesWithoutModule()))
         {
+
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false)
                 .Cast<TaskProviderAttribute>().FirstOrDefault();
+            if (configuration.TaskProvider != null)
+                configuration.TaskProvider.Definition = ModuleNodePropertyDefinitionExtensions.GetDefinition(type);
             Log.Information($"   -{type.Name}", " Loaded");
         }
 
