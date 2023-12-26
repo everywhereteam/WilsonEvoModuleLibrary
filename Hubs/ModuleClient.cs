@@ -43,13 +43,12 @@ public sealed class ModuleClient : IHostedService, IModuleClient
                 await _connection.StartAsync(cancellationToken);
                 if (_connection.State == HubConnectionState.Connected)
                 {
-                    string json = JsonConvert.SerializeObject(_configuration, Formatting.Indented, new JsonSerializerSettings()
-                    {                                                                   
-                        TypeNameHandling = TypeNameHandling.Auto,
-                        NullValueHandling = NullValueHandling.Ignore
+                    var binary = BinarySerialization.Serialize(_configuration, (settings) =>
+                    {
+                        settings.TypeNameHandling = TypeNameHandling.Auto;
+                        settings.NullValueHandling = NullValueHandling.Ignore;
                     });
-                    await _connection.InvokeAsync("RegisterServices", json,
-                        cancellationToken);
+                    await _connection.InvokeAsync("RegisterServices", binary, cancellationToken);
 
                     return;
                 }
