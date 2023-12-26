@@ -155,10 +155,6 @@ public static class ModuleLoader
         }));
     }
 
-    private static ModuleNodeDefinition GetDef<T>(T obj)
-    {
-        return ModuleNodePropertyDefinitionExtensions.GetDefinition<T>();
-    }
 
     private static void LoadConfiguration(this IServiceCollection services)
     {
