@@ -80,7 +80,7 @@ public static class ModuleLoader
             throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
 
 #if DEBUG
-        var url = "https://localhost:44335/hub/module";
+        var url = "https://localhost:44335/hub/module";  
 #else
         var url = "https://core.gestewwai.it/hub/module";
         //url = "https://localhost:44335/hub/module";
