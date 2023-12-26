@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Utility;
 
@@ -21,7 +22,7 @@ namespace WilsonEvoModuleLibrary.Services
 
         public Result<T> GetConfiguration<T>(SessionData session)
         {
-            var key = $"{session.CurrentShortUrl}.{typeof(T)}";
+            var key = $"{session.CurrentShortUrl}";
             if (_cache.TryGetValue(key, out T? value))
             {
                 if (value != null)
@@ -30,26 +31,25 @@ namespace WilsonEvoModuleLibrary.Services
                 }
             }
 
-            if (session.ServiceSecrets.ContainsKey(typeof(T).Name))
-            {
-                var raw = session.ServiceSecrets[typeof(T).Name];
-                if (raw == null)
-                {                                     
-                    return Result.Fail($"The configuration is empty or null for the type: {typeof(T).Name}");
-                }
 
-                var obj = BinarySerialization.Deserialize<T>(raw);
-                if (obj == null)
-                {                                    
-                    return Result.Fail($"The configuration for the type: {typeof(T).Name} deserialized is null.");
-                }
-                _cache.Set(key, obj);
-                return Result.Ok(obj);
+            var raw = session.ServiceSecrets;
+            if (raw == null)
+            {
+                return Result.Fail($"The configuration is empty or null for the type: {typeof(T).Name}");
             }
-            else
-            {                                    
-                return Result.Fail($"No configuration found for the type: {typeof(T).Name}");
+
+            var obj = BinarySerialization.Deserialize<T>(raw, (settings) =>
+            {
+                settings.DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate;
+                settings.TypeNameHandling = TypeNameHandling.Auto;
+            });
+            if (obj == null)
+            {
+                return Result.Fail($"The configuration for the type: {typeof(T).Name} deserialized is null.");
             }
+            _cache.Set(key, obj);
+            return Result.Ok(obj);
+
         }
     }
 }

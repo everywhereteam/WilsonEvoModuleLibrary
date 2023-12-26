@@ -46,7 +46,7 @@ public class SessionData
     /// <summary>
     /// This contains the secrets for the service, it's personal for modules.
     /// </summary>
-    public Dictionary<string, byte[]?> ServiceSecrets { get; set; } = new();
+    public byte[]? ServiceSecrets { get; set; }
 
 
 }
