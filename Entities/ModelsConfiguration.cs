@@ -1,6 +1,4 @@
-﻿using MessagePack;
-using MessagePack.Formatters;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Network;
 

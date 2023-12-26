@@ -6,7 +6,7 @@
     <LangVersion>preview</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageProjectUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</PackageProjectUrl>
-	<VersionPrefix>1.0.96</VersionPrefix>
+	<VersionPrefix>1.0.97</VersionPrefix>
     <PackageTags>Wilson;</PackageTags>
     <RepositoryUrl>https://github.com/everywhereteam/WilsonEvoModuleLibrary</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -14,7 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BlazorDynamicFormGenerator" Version="1.0.5" />
     <PackageReference Include="FluentResults" Version="3.15.2" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.5.129">
       <PrivateAssets>all</PrivateAssets>
@@ -33,6 +32,30 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BlazorDynamicForm">
+      <HintPath>Libs\BlazorDynamicForm.dll</HintPath>
+    </Reference>
+    <Reference Include="BlazorDynamicFormSyncfusion">
+      <HintPath>Libs\BlazorDynamicFormSyncfusion.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Libs\BlazorDynamicForm.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Libs\BlazorDynamicForm.pdb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Libs\BlazorDynamicFormSyncfusion.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Libs\BlazorDynamicFormSyncfusion.pdb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
+using BlazorDynamicForm;
 using MessagePack;
 using MessagePack.Formatters;
 using Microsoft.AspNetCore.Builder;
@@ -77,7 +79,7 @@ public static class ModuleLoader
             throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
 
 #if DEBUG
-        var url = "https://localhost:44335/hub/module"; 
+        var url = "https://localhost:44335/hub/module";
 #else
         var url = "https://core.gestewwai.it/hub/module";
         //url = "https://localhost:44335/hub/module";
@@ -169,6 +171,7 @@ public static class ModuleLoader
         foreach (var type in GetTypesWithAttribute<TaskAttribute>(GetAssembliesWithoutModule()))
         {
             var task = type.GetCustomAttributes(typeof(TaskAttribute), false).Cast<TaskAttribute>().FirstOrDefault();
+            task.Definition = DataAnnotationParser.ReadDataAnnotations(type);
             configuration.Tasks.Add(type.Name, task);
             Log.Information($"   -{type.Name}", " Loaded");
         }
@@ -178,6 +181,7 @@ public static class ModuleLoader
         {
             configuration.TaskProvider = type.GetCustomAttributes(typeof(TaskProviderAttribute), false)
                 .Cast<TaskProviderAttribute>().FirstOrDefault();
+            configuration.TaskProvider.Definition = DataAnnotationParser.ReadDataAnnotations(type);
             Log.Information($"   -{type.Name}", " Loaded");
         }
 

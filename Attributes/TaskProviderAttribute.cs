@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Runtime.Serialization;
-using BlazorDynamicFormGenerator;
-using FluentResults;
-using MessagePack;
-using MessagePack.Formatters;
+using BlazorDynamicForm.Entities;
 
 namespace WilsonEvoModuleLibrary.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public class TaskProviderAttribute : Attribute
 {                                                                  
-    public ModuleNodeDefinition Definition { get; set; }
+    public FormMap Definition { get; set; }
 }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace WilsonEvoModuleLibrary.Entities;
+﻿namespace WilsonEvoModuleLibrary.Entities;
 
 public class ServiceRequest
 {

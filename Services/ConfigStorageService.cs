@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentResults;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
+﻿using FluentResults;
 using Microsoft.Extensions.Caching.Memory;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Utility;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WilsonEvoModuleLibrary.Services
 {

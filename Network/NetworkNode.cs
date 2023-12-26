@@ -1,6 +1,4 @@
-﻿using MessagePack;
-
-namespace WilsonEvoModuleLibrary.Network;
+﻿namespace WilsonEvoModuleLibrary.Network;
 public class NetworkNode
 {               
     public string TaskTypeName { get; set; }

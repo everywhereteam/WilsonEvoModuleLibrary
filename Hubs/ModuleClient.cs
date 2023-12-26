@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentResults;
 using Microsoft.AspNetCore.SignalR.Client;        
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 using Serilog;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services;
@@ -42,7 +43,12 @@ public sealed class ModuleClient : IHostedService, IModuleClient
                 await _connection.StartAsync(cancellationToken);
                 if (_connection.State == HubConnectionState.Connected)
                 {
-                    await _connection.InvokeAsync("RegisterServices", _configuration,
+                    string json = JsonConvert.SerializeObject(_configuration, Formatting.Indented, new JsonSerializerSettings()
+                    {                                                                   
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        NullValueHandling = NullValueHandling.Ignore
+                    });
+                    await _connection.InvokeAsync("RegisterServices", json,
                         cancellationToken);
 
                     return;
