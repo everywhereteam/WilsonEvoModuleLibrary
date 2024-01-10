@@ -4,5 +4,6 @@
     {
 
         public string Token { get; set; }
+        public bool IsDebug { get; set; } = false;
     }
 }

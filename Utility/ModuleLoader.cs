@@ -78,13 +78,17 @@ public static class ModuleLoader
         var moduleConfig = builder.Configuration.GetSection("WilsonConfig").Get<WilsonConfig>() ?? new WilsonConfig();
         if (string.IsNullOrWhiteSpace(moduleConfig.Token))
             throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
-
-#if DEBUG
-        var url = "https://localhost:44335/hub/module";  
-#else
-        var url = "https://core.gestewwai.it/hub/module";
-        //url = "https://localhost:44335/hub/module";
-#endif
+        var url = "";
+        if (moduleConfig.IsDebug)
+        {
+            url = "https://localhost:44335/hub/module";
+            Log.Information("Debug Mode enabled");
+        }
+        else
+        {       
+            url = "https://core.gestewwai.it/hub/module";
+            Log.Information("Production Mode enabled");
+        }
 
 
 
