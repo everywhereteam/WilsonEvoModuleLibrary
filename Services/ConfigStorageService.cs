@@ -1,4 +1,5 @@
-﻿using FluentResults;
+﻿using System;
+using FluentResults;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using WilsonEvoModuleLibrary.Entities;
@@ -47,7 +48,7 @@ namespace WilsonEvoModuleLibrary.Services
             {
                 return Result.Fail($"The configuration for the type: {typeof(T).Name} deserialized is null.");
             }
-            _cache.Set(key, obj);
+            _cache.Set(key, obj, TimeSpan.FromSeconds(30));
             return Result.Ok(obj);
 
         }

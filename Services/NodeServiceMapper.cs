@@ -55,15 +55,18 @@ public sealed class NodeServiceMapper
 
         var response = new ServiceResponse();
         var output = "ok";
-        if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, request.SessionData.ChannelType),
-                out var serviceType))
+            
+        if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, request.SessionData.ChannelType), out var serviceType))
         {
-            session.Exception = "Missing service from module.";
-            session.ContinueExecution = false;
-            session.WaitingCallback = false;
-            session.IsFaulted = true;
+            if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, string.Empty), out serviceType))
+            {
+                session.Exception = "Missing service from module.";
+                session.ContinueExecution = false;
+                session.WaitingCallback = false;
+                session.IsFaulted = true;
+            }               
         }
-        else
+        if(serviceType != null)
         {
             using var scope = _servicesProvider.CreateScope();
             var service = scope.ServiceProvider.GetService(serviceType);
