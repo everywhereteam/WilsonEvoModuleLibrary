@@ -1,7 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
+using WilsonEvoModuleLibrary.Entities;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
@@ -36,5 +39,13 @@ public static class BinarySerialization
         serializer.ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor;
         settings?.Invoke(serializer);
         return serializer.Deserialize(reader);
+    }
+
+    public static async Task<object?> DeserializeWithType(byte[] data, Type? type)
+    {
+        var ms = new MemoryStream(data);
+        await using var reader = new BsonDataReader(ms);
+        var o = (JObject)await JToken.ReadFromAsync(reader);
+        return type != null ? o.ToObject(type) : null;
     }
 }

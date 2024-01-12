@@ -62,28 +62,38 @@ public sealed class NodeServiceMapper
             return Result.Fail($"Error getting the service module for: {type} and {channelType} \n {ex.Message}");
         }
     }
-        
+
     public async Task<string> UpdateService(UpdateRequest updateRequest)
     {
-        foreach (var task in updateRequest.Tasks)
+        try
         {
-            var serviceResult = GetService(task.ModelType, task.ChannelType);
-            if (serviceResult.IsSuccess)
+            foreach (var task in updateRequest.Tasks)
             {
-                List<BaseTask> nodesToUpdate = new();
-                foreach (var taskData in updateRequest.Tasks)
-                { 
-                    var node = BinarySerialization.Deserialize(taskData.data);
-                    if (node != null)
-                    {
-                        nodesToUpdate.Add((BaseTask)node);
-                    }
-                }    
-                if (serviceResult.Value is IEnvironmentDeploy service)
+                var serviceResult = GetService(task.ModelType, task.ChannelType);
+                if (serviceResult.IsSuccess)
                 {
-                    await service.HandleDeploy(nodesToUpdate);
+                    var service = serviceResult.Value;
+                    List<BaseTask> nodesToUpdate = new();
+                    foreach (var taskData in updateRequest.Tasks)
+                    {
+                        var node = await BinarySerialization.DeserializeWithType(taskData.data, service.GetType().GenericTypeArguments[0]);
+                        if (node != null)
+                        {
+                            nodesToUpdate.Add((BaseTask)node);
+                        }
+                    }
+
+                    if (service is IEnvironmentDeploy serviceI)
+                    {
+                        await serviceI.HandleDeploy(nodesToUpdate);
+                    }
                 }
             }
+        }
+        catch (Exception ex)
+        {
+
+            return ex.Message;
         }
 
         return "ok";
@@ -107,8 +117,8 @@ public sealed class NodeServiceMapper
         else
         {
             var service = serviceResult.Value;
-            var node = BinarySerialization.Deserialize(request.NodeData);
-           // var node = await ReadSessionData(request, service.GetType().GenericTypeArguments[0]);
+            var node = await BinarySerialization.DeserializeWithType(request.NodeData, service.GetType().GenericTypeArguments[0]);
+           // var node = await ReadSessionData(request, );
 
             if (service is IExecutionService syncService)
             {
