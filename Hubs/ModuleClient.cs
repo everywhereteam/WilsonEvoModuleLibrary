@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentResults;
@@ -29,6 +30,7 @@ public sealed class ModuleClient : IHostedService, IModuleClient
 
         _connection = hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy()).Build();
         _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
+        _connection.On<UpdateRequest, string>("EnvironmentUpdate", EnvironmentUpdate);
         _connection.Closed += Closed;
         _connection.ServerTimeout = TimeSpan.FromSeconds(25);
         _connection.HandshakeTimeout = TimeSpan.FromSeconds(25);
@@ -67,6 +69,11 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         _logger.Warning("[Wilson] Closing Connection..");
         //await _connection.StopAsync(cancellationToken);
         await _connection.DisposeAsync();
+    }
+
+    public async Task<string> EnvironmentUpdate(UpdateRequest updateRequest)
+    {
+        return await _mapper.UpdateService(updateRequest);
     }
 
     public async Task<ServiceResponse> Execute(ServiceRequest request)

@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using FluentResults;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
+using WilsonEvoModuleLibrary.Utility;
 
 namespace WilsonEvoModuleLibrary.Services;
 
@@ -23,30 +26,68 @@ public sealed class NodeServiceMapper
         _config = config;
     }
 
-    //private ModuleNodeDefinition GetDefinition(Type type)
-    //{
-    //    ModuleNodeDefinition definition = new ModuleNodeDefinition();
-    //    foreach (PropertyInfo property in type.GetProperties())
-    //    {
-    //        DataTypeAttribute dataTypeAttribute = (DataTypeAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(DataTypeAttribute), false)).First<object>();
-    //        DisplayAttribute displayAttribute = (DisplayAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(DisplayAttribute), false)).FirstOrDefault<object>();
-    //        bool flag = (BlazorDynamicFormGenerator.ReadOnlyAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(ReadOnlyAttribute), false)).FirstOrDefault<object>() != null;
-    //        DefaultValueAttribute defaultValueAttribute = (DefaultValueAttribute)((IEnumerable<object>)property.GetCustomAttributes(typeof(DefaultValueAttribute), false)).FirstOrDefault<object>();
-    //        List<ValidationAttribute> list = property.GetCustomAttributes(typeof(ValidationAttribute), false).Cast<ValidationAttribute>().ToList<ValidationAttribute>();
-    //        ModuleNodePropertyDefinition propertyDefinition = new ModuleNodePropertyDefinition()
-    //        {
-    //            Name = property.Name,
-    //            DisplayName = displayAttribute?.Name,
-    //            DataType = dataTypeAttribute?.DataType,
-    //            CustomDataType = dataTypeAttribute?.CustomDataType,
-    //            ValidationRules = list,
-    //            ReadOnly = flag,
-    //            DefaultValue = defaultValueAttribute?.Value
-    //        };
-    //        definition.PropertyDefinitions.Add(propertyDefinition);
-    //    }
-    //    return definition;
-    //}
+    public Result<object> GetService(string type, string channelType)
+    {
+        try
+        {
+            if (!_map.ServiceMap.TryGetValue(new MapPath(type, channelType), out var serviceType))
+            {
+                if (!_map.ServiceMap.TryGetValue(new MapPath(type, string.Empty), out serviceType))
+                {
+                    return Result.Fail($"Missing service for: {type} and {channelType}");
+                }
+            }
+
+            if (serviceType != null)
+            {
+
+                using var scope = _servicesProvider.CreateScope();
+                var service = scope.ServiceProvider.GetService(serviceType);
+                if (service != null)
+                {
+                    return Result.Ok(service);
+                }
+                else
+                {
+                    return Result.Fail($"The service {type} can't be instantiated.");
+                }
+            }
+            else
+            {
+                return Result.Fail("The service type is null.");
+            }
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Error getting the service module for: {type} and {channelType} \n {ex.Message}");
+        }
+    }
+        
+    public async Task<string> UpdateService(UpdateRequest updateRequest)
+    {
+        foreach (var task in updateRequest.Tasks)
+        {
+            var serviceResult = GetService(task.ModelType, task.ChannelType);
+            if (serviceResult.IsSuccess)
+            {
+                List<BaseTask> nodesToUpdate = new();
+                foreach (var taskData in updateRequest.Tasks)
+                { 
+                    var node = BinarySerialization.Deserialize(taskData.data);
+                    if (node != null)
+                    {
+                        nodesToUpdate.Add((BaseTask)node);
+                    }
+                }    
+                if (serviceResult.Value is IEnvironmentDeploy service)
+                {
+                    await service.HandleDeploy(nodesToUpdate);
+                }
+            }
+        }
+
+        return "ok";
+    }
 
 
     public async Task<ServiceResponse> ExecuteService(ServiceRequest request)
@@ -55,27 +96,23 @@ public sealed class NodeServiceMapper
 
         var response = new ServiceResponse();
         var output = "ok";
-            
-        if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, request.SessionData.ChannelType), out var serviceType))
+        var serviceResult = GetService(request.Type, request.SessionData.ChannelType);
+
+        if (serviceResult.IsFailed)
         {
-            if (!_map.ServiceMap.TryGetValue(new MapPath(request.Type, string.Empty), out serviceType))
-            {
-                session.Exception = "Missing service from module.";
-                session.ContinueExecution = false;
-                session.WaitingCallback = false;
-                session.IsFaulted = true;
-            }               
+            session.Exception = serviceResult.ToString();   //too see
+            session.CurrentOutput = "error";
+            session.IsFaulted = true;
         }
-        if(serviceType != null)
+        else
         {
-            using var scope = _servicesProvider.CreateScope();
-            var service = scope.ServiceProvider.GetService(serviceType);
-            //TODO: add verification for the type
-            var node = await ReadSessionData(request, serviceType.GenericTypeArguments[0]);
+            var service = serviceResult.Value;
+            var node = BinarySerialization.Deserialize(request.NodeData);
+           // var node = await ReadSessionData(request, service.GetType().GenericTypeArguments[0]);
 
             if (service is IExecutionService syncService)
             {
-                await syncService.Execute(in node, ref session ,ref output);
+                await syncService.Execute(in node, ref session, ref output);
             }
             else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
             {
@@ -96,18 +133,11 @@ public sealed class NodeServiceMapper
                 session.IsFaulted = true;
                 session.Exception = "Module service not found.";
             }
+            session.CurrentOutput = output;
         }
 
-        session.CurrentOutput = output;
+
         response.SessionData = session;
         return response;
-    }
-
-    private async Task<object?> ReadSessionData(ServiceRequest request, Type? type)
-    {
-        var ms = new MemoryStream(request.NodeData);
-        await using var reader = new BsonDataReader(ms);
-        var o = (JObject)await JToken.ReadFromAsync(reader);
-        return type != null ? o.ToObject(type) : null;
-    }
+    } 
 }
