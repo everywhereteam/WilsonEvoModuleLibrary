@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentResults;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,66 +27,71 @@ public sealed class NodeServiceMapper
         _config = config;
     }
 
-    public Result<object> GetService(string type, string channelType)
+    public object? GetService(Type? type)
     {
         try
-        {
-            if (!_map.ServiceMap.TryGetValue(new MapPath(type, channelType), out var serviceType))
-            {
-                if (!_map.ServiceMap.TryGetValue(new MapPath(type, string.Empty), out serviceType))
-                {
-                    return Result.Fail($"Missing service for: {type} and {channelType}");
-                }
-            }
-
-            if (serviceType != null)
+        {     
+            if (type != null)
             {
 
                 using var scope = _servicesProvider.CreateScope();
-                var service = scope.ServiceProvider.GetService(serviceType);
+                var service = scope.ServiceProvider.GetService(type);
                 if (service != null)
                 {
-                    return Result.Ok(service);
+                    return service;
                 }
                 else
                 {
-                    return Result.Fail($"The service {type} can't be instantiated.");
+                    return null;//Result.Fail($"The service {type} can't be instantiated.");
                 }
             }
             else
             {
-                return Result.Fail("The service type is null.");
+                return null;// Result.Fail("The service type is null.");
             }
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Error getting the service module for: {type} and {channelType} \n {ex.Message}");
+            return null;//Result.Fail($"Error getting the service module for: {type} and {channelType} \n {ex.Message}");
         }
+    }
+
+    private bool GetServiceType(string type, string channelType, out Type? serviceType)
+    {
+        if (!_map.ServiceMap.TryGetValue(new MapPath(type, channelType), out serviceType))
+        {
+            if (!_map.ServiceMap.TryGetValue(new MapPath(type, string.Empty), out serviceType))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public async Task<string> UpdateService(UpdateRequest updateRequest)
     {
         try
         {
-            foreach (var task in updateRequest.Tasks)
+            foreach (var group in updateRequest.Tasks.GroupBy(x => new { x.ModelType, x.ChannelType }))
             {
-                var serviceResult = GetService(task.ModelType, task.ChannelType);
-                if (serviceResult.IsSuccess)
+                if (!GetServiceType(group.Key.ModelType, group.Key.ChannelType, out var serviceType))
                 {
-                    var service = serviceResult.Value;
-                    List<BaseTask> nodesToUpdate = new();
-                    foreach (var taskData in updateRequest.Tasks)
+                    return $"Missing service for: {group.Key.ModelType} and {group.Key.ChannelType}";
+                }
+                var service = GetService(serviceType);
+                if (service != null)
+                {
+                  
+                    var listNodes = new List<BaseTask>();
+                    foreach (var task in group)
                     {
-                        var node = await BinarySerialization.DeserializeWithType(taskData.data, service.GetType().GenericTypeArguments[0]);
-                        if (node != null)
-                        {
-                            nodesToUpdate.Add((BaseTask)node);
-                        }
+                        var data = await BinarySerialization.DeserializeWithType(task.data, serviceType.GenericTypeArguments[0]);
+                        listNodes.Add((BaseTask)data);
                     }
-
                     if (service is IEnvironmentDeploy serviceI)
                     {
-                        await serviceI.HandleDeploy(nodesToUpdate);
+                        await serviceI.HandleDeploy(listNodes);
                     }
                 }
             }
@@ -106,19 +112,18 @@ public sealed class NodeServiceMapper
 
         var response = new ServiceResponse();
         var output = "ok";
-        var serviceResult = GetService(request.Type, request.SessionData.ChannelType);
 
-        if (serviceResult.IsFailed)
+        if (!GetServiceType(request.Type, request.SessionData.ChannelType, out var serviceType))
         {
-            session.Exception = serviceResult.ToString();   //too see
+            session.Exception = $"Missing service for: {request.Type} and {request.SessionData.ChannelType}";   //too see
             session.CurrentOutput = "error";
             session.IsFaulted = true;
         }
         else
         {
-            var service = serviceResult.Value;
-            var node = await BinarySerialization.DeserializeWithType(request.NodeData, service.GetType().GenericTypeArguments[0]);
-           // var node = await ReadSessionData(request, );
+            var service = GetService(serviceType);
+            var node = await BinarySerialization.DeserializeWithType(request.NodeData, serviceType.GenericTypeArguments[0]);
+            // var node = await ReadSessionData(request, );
 
             if (service is IExecutionService syncService)
             {
@@ -149,5 +154,5 @@ public sealed class NodeServiceMapper
 
         response.SessionData = session;
         return response;
-    } 
+    }
 }
