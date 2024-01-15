@@ -83,16 +83,17 @@ public sealed class NodeServiceMapper
                 if (service != null)
                 {
                   
-                    var listNodes = new List<BaseTask>();
+                    var listNodes = new Dictionary<string,BaseTask>();
                     foreach (var task in group)
                     {
                         var data = await BinarySerialization.DeserializeWithType(task.data, serviceType.GenericTypeArguments[0]);
-                        listNodes.Add((BaseTask)data);
+                        listNodes.Add(task.NodeId,(BaseTask)data);
                     }
                     if (service is IEnvironmentDeploy serviceI)
                     {
-                        await serviceI.HandleDeploy(listNodes);
-                    }
+                        await serviceI.HandleDeployInternal(updateRequest.projectCode,listNodes);
+                       
+                    } 
                 }
             }
         }
