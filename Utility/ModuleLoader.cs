@@ -51,8 +51,7 @@ public static class ModuleLoader
             .MinimumLevel.Information()
 #endif                                  
             .WriteTo.Console()
-            .WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 7)
+            .WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
             .CreateLogger();
 
         builder.Host.UseSerilog((host, logger) =>
@@ -63,8 +62,7 @@ public static class ModuleLoader
             logger.MinimumLevel.Information();
 #endif
             logger.WriteTo.Console();
-            logger.WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 7);
+            logger.WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7);
         });
     }
 
