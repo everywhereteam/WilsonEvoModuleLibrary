@@ -113,43 +113,61 @@ public sealed class NodeServiceMapper
 
         var response = new ServiceResponse();
         var output = "ok";
-
-        if (!GetServiceType(request.Type, request.SessionData.ChannelType, out var serviceType))
+        try
         {
-            session.Exception = $"Missing service for: {request.Type} and {request.SessionData.ChannelType}";   //too see
-            session.CurrentOutput = "error";
-            session.IsFaulted = true;
-        }
-        else
-        {
-            var service = GetService(serviceType);
-            var node = await BinarySerialization.DeserializeWithType(request.NodeData, serviceType.GenericTypeArguments[0]);
-            // var node = await ReadSessionData(request, );
-
-            if (service is IExecutionService syncService)
+            if (!GetServiceType(request.Type, request.SessionData.ChannelType, out var serviceType))
             {
-                await syncService.Execute(in node, ref session, ref output);
-            }
-            else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
-            {
-                await asyncService.Execute(in node, ref session, ref output);
-                session.WaitingCallback = true;
-                session.ContinueExecution = false;
-            }
-            else if (service is IAsyncExecutionService asyncServiceCallback && session.WaitingCallback)
-            {
-                await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
-                session.WaitingCallback = false;
+                session.Exception = $"Missing service for: {request.Type} and {request.SessionData.ChannelType}"; //too see
+                session.CurrentOutput = "error";
+                session.IsFaulted = true;
             }
             else
             {
-                //this is shit where i go?
-                session.ContinueExecution = false;
-                session.WaitingCallback = false;
-                session.IsFaulted = true;
-                session.Exception = "Module service not found.";
+                var service = GetService(serviceType);
+                var node = await BinarySerialization.DeserializeWithType(request.NodeData, serviceType.GenericTypeArguments[0]);
+                // var node = await ReadSessionData(request, );
+                if (node == null)
+                {
+                    session.IsFaulted = true;
+                    session.Exception = $"No data in {request.Type}.";
+                    session.CurrentOutput = "error";
+                }
+                else
+                {
+                    if (service is IExecutionService syncService)
+                    {
+                        await syncService.Execute(in node, ref session, ref output);
+                    }
+                    else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
+                    {
+                        await asyncService.Execute(in node, ref session, ref output);
+                        session.WaitingCallback = true;
+                        session.ContinueExecution = false;
+                    }
+                    else if (service is IAsyncExecutionService asyncServiceCallback && session.WaitingCallback)
+                    {
+                        await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
+                        session.WaitingCallback = false;
+                    }
+                    else
+                    {
+                        //this is shit where i go?          
+                        session.WaitingCallback = false;
+                        session.IsFaulted = true;
+                        session.CurrentOutput = "error";
+                        session.Exception = "Module service not found.";
+                    }
+
+                    session.CurrentOutput = output;
+                }
+
+                
             }
-            session.CurrentOutput = output;
+        }
+        catch (Exception e)
+        {
+            session.IsFaulted = true;
+            session.Exception = e.Message;
         }
 
 

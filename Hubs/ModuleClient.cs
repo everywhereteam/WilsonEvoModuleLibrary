@@ -20,6 +20,8 @@ public sealed class ModuleClient : IHostedService, IModuleClient
     private readonly ILogger _logger;
     private readonly NodeServiceMapper _mapper;
 
+    private readonly byte[]? ConfigurationRaw;
+
     public ModuleClient(ILogger logger, ModelsConfiguration configuration,
         IHubConnectionBuilder hubConnectionBuilder, NodeServiceMapper mapper,
         IHostApplicationLifetime hostApplicationLifetime)
@@ -28,13 +30,25 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         _logger = logger;
         _configuration = configuration;
 
+        ConfigurationRaw = BinarySerialization.Serialize(_configuration, (settings) =>
+        {
+            settings.TypeNameHandling = TypeNameHandling.Auto;
+            settings.NullValueHandling = NullValueHandling.Ignore;
+        });
+
         _connection = hubConnectionBuilder.WithAutomaticReconnect(new CustomRetryPolicy()).Build();
         _connection.On<ServiceRequest, ServiceResponse>(nameof(Execute), Execute);
         _connection.On<UpdateRequest, string>("EnvironmentUpdate", EnvironmentUpdate);
         _connection.Closed += Closed;
         _connection.ServerTimeout = TimeSpan.FromSeconds(25);
         _connection.HandshakeTimeout = TimeSpan.FromSeconds(25);
-       // _connection.KeepAliveInterval = TimeSpan.FromSeconds(10);
+        _connection.Reconnected += OnReconnect;
+        // _connection.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    }
+
+    private async Task OnReconnect(string? arg)
+    {
+        await _connection.InvokeAsync("RegisterServices", ConfigurationRaw);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -45,12 +59,8 @@ public sealed class ModuleClient : IHostedService, IModuleClient
                 await _connection.StartAsync(cancellationToken);
                 if (_connection.State == HubConnectionState.Connected)
                 {
-                    var binary = BinarySerialization.Serialize(_configuration, (settings) =>
-                    {
-                        settings.TypeNameHandling = TypeNameHandling.Auto;
-                        settings.NullValueHandling = NullValueHandling.Ignore;
-                    });
-                    await _connection.InvokeAsync("RegisterServices", binary, cancellationToken);
+                   
+                    await _connection.InvokeAsync("RegisterServices", ConfigurationRaw, cancellationToken);
 
                     return;
                 }
