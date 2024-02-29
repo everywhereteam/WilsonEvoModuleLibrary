@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using WilsonEvoModuleLibrary.Attributes;
-using WilsonEvoModuleLibrary.Common.Values;
+using WilsonEvoModuleLibrary.Common.Entities.Values;
 using WilsonEvoModuleLibrary.Entities;
 
 namespace WilsonEvoModuleLibrary.Common.Task;
@@ -9,8 +9,7 @@ namespace WilsonEvoModuleLibrary.Common.Task;
 [Task("SendToAgent", Categories.Function, Output.Ok, Output.Error, Output.Timeout)]
 public class SendToAgentTask : BaseTask
 {
-    
-    [Display(Name = "Variables"),DataType("Dictionary")]
+    [Display(Name = "Variables"), DataType("Dictionary")]
     public Dictionary<string, string> Data { get; set; } = new();
 
     [Display(Name = "Destination"), DataType(DataType.Text)]
@@ -21,7 +20,4 @@ public class SendToAgentTask : BaseTask
 
     [Display(Name = "Operator Response Timeout"), DataType(DataType.Text)]
     public int OperatorResponseTimeout { get; set; }
-
-
-
 }

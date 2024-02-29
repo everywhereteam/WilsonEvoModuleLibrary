@@ -3,7 +3,7 @@ using WilsonEvoModuleLibrary.Entities;
 
 namespace WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
-internal interface IExecutionService
+public interface IExecutionService
 {
-    Task Execute(in object nodeData, ref SessionData data, ref string output);
+    Task Execute(in object nodeData, ref SessionData session, ref string output);
 }

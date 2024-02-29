@@ -15,9 +15,7 @@ public struct MapPath
 
     public override bool Equals(object obj)
     {
-        return obj is MapPath key &&
-               TaskType == key.TaskType &&
-               TaskChannel == key.TaskChannel;
+        return obj is MapPath key && TaskType == key.TaskType && TaskChannel == key.TaskChannel;
     }
 
     public override int GetHashCode()

@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
-using WilsonEvoModuleLibrary.Attributes;
+using BlazorDynamicForm.Entities;
+using WilsonEvoModuleLibrary.Common.Attributes;
 using WilsonEvoModuleLibrary.Network;
 
 namespace WilsonEvoModuleLibrary.Entities;
+
 public class ModelsConfiguration
-{                                                                
-    public TaskProviderAttribute? TaskProvider { get; set; }
-    public Dictionary<string, TaskAttribute>? Tasks { get; set; }
-    public NetworkDefinition? Network { get; set; }
+{
+    public FormMap? ConfigurationScheme { get; set; }
+    public Dictionary<string, TaskAttribute> Tasks { get; set; } = new();
+    public List<NetworkNode> Network { get; set; } = new();
 }

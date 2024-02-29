@@ -5,52 +5,46 @@ using Newtonsoft.Json;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Utility;
 
-namespace WilsonEvoModuleLibrary.Services
+namespace WilsonEvoModuleLibrary.Services;
+
+internal class ConfigStorageService : IConfigStorageService
 {
-    public interface IConfigStorageService
+    private readonly IMemoryCache _cache;
+
+    public ConfigStorageService(IMemoryCache cache)
     {
-        Result<T> GetConfiguration<T>(SessionData session);
+        _cache = cache;
     }
 
-    internal class ConfigStorageService : IConfigStorageService
+    public Result<T> GetConfiguration<T>(SessionData session)
     {
-        private readonly IMemoryCache _cache;
-
-        public ConfigStorageService(IMemoryCache cache)
+        var key = $"{session.CurrentShortUrl}";
+        if (_cache.TryGetValue(key, out T? value))
         {
-            _cache = cache;
+            if (value != null)
+            {
+                return Result.Ok(value);
+            }
         }
 
-        public Result<T> GetConfiguration<T>(SessionData session)
+
+        var raw = session.ServiceSecrets;
+        if (raw == null)
         {
-            var key = $"{session.CurrentShortUrl}";
-            if (_cache.TryGetValue(key, out T? value))
-            {
-                if (value != null)
-                {
-                    return Result.Ok(value);
-                }
-            }
-
-
-            var raw = session.ServiceSecrets;
-            if (raw == null)
-            {
-                return Result.Fail($"The configuration is empty or null for the type: {typeof(T).Name}");
-            }
-
-            var obj = BinarySerialization.Deserialize<T>(raw, (settings) =>
-            {
-                settings.DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate;
-                settings.TypeNameHandling = TypeNameHandling.Auto;
-            });
-            if (obj == null)
-            {
-                return Result.Fail($"The configuration for the type: {typeof(T).Name} deserialized is null.");
-            }
-            _cache.Set(key, obj, TimeSpan.FromSeconds(30));
-            return Result.Ok(obj);
-
+            return Result.Fail($"The configuration is empty or null for the type: {typeof(T).Name}");
         }
+
+        var obj = BinarySerialization.Deserialize<T>(raw, settings =>
+        {
+            settings.DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate;
+            settings.TypeNameHandling = TypeNameHandling.Auto;
+        });
+        if (obj == null)
+        {
+            return Result.Fail($"The configuration for the type: {typeof(T).Name} deserialized is null.");
+        }
+
+        _cache.Set(key, obj, TimeSpan.FromSeconds(30));
+        return Result.Ok(obj);
     }
 }

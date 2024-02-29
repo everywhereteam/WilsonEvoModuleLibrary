@@ -1,14 +1,12 @@
-﻿using BlazorDynamicForm.Entities;
-using System;
+﻿using System;
+using BlazorDynamicForm.Entities;
 
-namespace WilsonEvoModuleLibrary.Attributes;
+namespace WilsonEvoModuleLibrary.Common.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public class TaskAttribute : Attribute
 {
-    public TaskAttribute(string name, string category, string cssIcon, string cssNode, string description,
-        string documentationUrl,
-        bool hasDynamicOutput, params string[] defaultOutputs)
+    public TaskAttribute(string name, string category, string? cssIcon, string? cssNode, string? description, string? documentationUrl, bool hasDynamicOutput, params string[] defaultOutputs)
     {
         Name = name;
         Category = category;
@@ -20,8 +18,7 @@ public class TaskAttribute : Attribute
         CssNode = cssNode;
     }
 
-    public TaskAttribute(string name, string category, string description, string documentationUrl,
-        bool hasDynamicOutput, params string[] defaultOutputs)
+    public TaskAttribute(string name, string category, string? description, string? documentationUrl, bool hasDynamicOutput, params string[] defaultOutputs)
     {
         Name = name;
         Category = category;
@@ -38,22 +35,19 @@ public class TaskAttribute : Attribute
         DefaultOutputs = defaultOutputs;
     }
 
-    public TaskAttribute()
-    {
-    }
     public string Name { get; set; }
 
     public string Category { get; set; }
 
     public string[] DefaultOutputs { get; set; }
 
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
-    public string CssIcon { get; set; }
+    public string? CssIcon { get; set; }
 
-    public string CssNode { get; set; }
+    public string? CssNode { get; set; }
 
-    public string DocumentationUrl { get; set; }
+    public string? DocumentationUrl { get; set; }
 
     public bool HasDynamicOutput { get; set; }
     public FormMap? Definition { get; set; } = null;

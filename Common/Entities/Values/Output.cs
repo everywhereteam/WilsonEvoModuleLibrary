@@ -1,4 +1,4 @@
-﻿namespace WilsonEvoModuleLibrary.Common.Values;
+﻿namespace WilsonEvoModuleLibrary.Common.Entities.Values;
 
 public static class Output
 {

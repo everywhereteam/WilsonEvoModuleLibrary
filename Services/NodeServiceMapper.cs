@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentResults;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Bson;
-using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 using WilsonEvoModuleLibrary.Utility;
@@ -15,45 +11,29 @@ namespace WilsonEvoModuleLibrary.Services;
 
 public sealed class NodeServiceMapper
 {
-    private readonly ModelsConfiguration _config;
     private readonly ServiceMappings _map;
     private readonly IServiceProvider _servicesProvider;
 
     public NodeServiceMapper(IServiceProvider service, ServiceMappings map, ModelsConfiguration config)
-    {
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+    {                                                                        
         _servicesProvider = service;
         _map = map;
-        _config = config;
     }
 
-    public object? GetService(Type? type)
+    private object? GetService(Type? type)
     {
-        try
-        {     
-            if (type != null)
-            {
-
-                using var scope = _servicesProvider.CreateScope();
-                var service = scope.ServiceProvider.GetService(type);
-                if (service != null)
-                {
-                    return service;
-                }
-                else
-                {
-                    return null;//Result.Fail($"The service {type} can't be instantiated.");
-                }
-            }
-            else
-            {
-                return null;// Result.Fail("The service type is null.");
-            }
-        }
-        catch (Exception ex)
+        if (type != null)
         {
-            return null;//Result.Fail($"Error getting the service module for: {type} and {channelType} \n {ex.Message}");
+            using var scope = _servicesProvider.CreateScope();
+            var service = scope.ServiceProvider.GetService(type);
+            if (service != null)
+            {
+                return service;
+            }
+
+            return null; 
         }
+        return null;
     }
 
     private bool GetServiceType(string type, string channelType, out Type? serviceType)
@@ -64,8 +44,7 @@ public sealed class NodeServiceMapper
             {
                 return false;
             }
-        }
-
+        }         
         return true;
     }
 
@@ -79,27 +58,44 @@ public sealed class NodeServiceMapper
                 {
                     return $"Missing service for: {group.Key.ModelType} and {group.Key.ChannelType}";
                 }
+
+                if (serviceType == null)
+                {
+                    throw new Exception($"Invalid serviceType on the module update  for: {group.Key.ModelType} and {group.Key.ChannelType}."); 
+                }
+
                 var service = GetService(serviceType);
                 if (service != null)
                 {
-                  
-                    var listNodes = new Dictionary<string,BaseTask>();
+                    var listNodes = new Dictionary<string, BaseTask>();
                     foreach (var task in group)
                     {
+                        if (task.data is null)
+                            continue;
                         var data = await BinarySerialization.DeserializeWithType(task.data, serviceType.GenericTypeArguments[0]);
-                        listNodes.Add(task.NodeId,(BaseTask)data);
+                        if (data is BaseTask baseTask)
+                        {
+                            listNodes.Add(task.NodeId, baseTask);
+                        }
+                        else
+                        {
+                            throw new Exception("Invalid data type");
+                        }
                     }
+
                     if (service is IEnvironmentDeploy serviceI)
                     {
-                        await serviceI.HandleDeployInternal(updateRequest.projectCode,listNodes);
-                       
-                    } 
+                        await serviceI.HandleDeployInternal(updateRequest.projectCode, listNodes);
+                    }
+                }
+                else
+                {
+                    throw new Exception($"No service found  for: {group.Key.ModelType} and {group.Key.ChannelType} on the module update.");
                 }
             }
         }
         catch (Exception ex)
         {
-
             return ex.Message;
         }
 
@@ -107,71 +103,55 @@ public sealed class NodeServiceMapper
     }
 
 
-    public async Task<ServiceResponse> ExecuteService(ServiceRequest request)
+    public async Task ExecuteService(SessionData session, string type, string channelType, byte[] data)
     {
-        var session = request.SessionData;
-
-        var response = new ServiceResponse();
         var output = "ok";
         try
         {
-            if (!GetServiceType(request.Type, request.SessionData.ChannelType, out var serviceType))
+            if (!GetServiceType(type, channelType, out var serviceType))
             {
-                session.Exception = $"Missing service for: {request.Type} and {request.SessionData.ChannelType}"; //too see
-                session.CurrentOutput = "error";
-                session.IsFaulted = true;
+                session.SetError($"Missing service for: {type} and {channelType}");
+                return;
             }
-            else
+            if (serviceType == null)
             {
-                var service = GetService(serviceType);
-                var node = await BinarySerialization.DeserializeWithType(request.NodeData, serviceType.GenericTypeArguments[0]);
-                // var node = await ReadSessionData(request, );
-                if (node == null)
-                {
-                    session.IsFaulted = true;
-                    session.Exception = $"No data in {request.Type}.";
-                    session.CurrentOutput = "error";
-                }
-                else
-                {
-                    if (service is IExecutionService syncService)
-                    {
-                        await syncService.Execute(in node, ref session, ref output);
-                    }
-                    else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
-                    {
-                        await asyncService.Execute(in node, ref session, ref output);
-                        session.WaitingCallback = true;
-                        session.ContinueExecution = false;
-                    }
-                    else if (service is IAsyncExecutionService asyncServiceCallback && session.WaitingCallback)
-                    {
-                        await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
-                        session.WaitingCallback = false;
-                    }
-                    else
-                    {
-                        //this is shit where i go?          
-                        session.WaitingCallback = false;
-                        session.IsFaulted = true;
-                        session.CurrentOutput = "error";
-                        session.Exception = "Module service not found.";
-                    }
+                session.SetError($"Service is null for: {type} and {channelType}");
+                return;
+            }
 
+            var service = GetService(serviceType);
+            var nodeData = await BinarySerialization.DeserializeWithType(data, serviceType.GenericTypeArguments[0]);
+            if (nodeData == null)
+            {
+                session.SetError($"No data present in node for: {session.SessionId} Service: {type} and Channel: {channelType}.");
+                return;
+            }
+
+            switch (service)
+            {
+                case IExecutionService syncService:
+                    await syncService.Execute(in nodeData, ref session, ref output);
                     session.CurrentOutput = output;
-                }
-
-                
+                    break;
+                case IAsyncExecutionService asyncService when !session.WaitingCallback:
+                    await asyncService.Execute(in nodeData, ref session, ref output);
+                    session.CurrentOutput = output;
+                    session.WaitingCallback = true;
+                    session.ContinueExecution = false;
+                    break;
+                case IAsyncExecutionService asyncServiceCallback when session.WaitingCallback:
+                    await asyncServiceCallback.ExecuteCallback(in nodeData, ref session, ref output);
+                    session.CurrentOutput = output;
+                    session.WaitingCallback = false;
+                    break;
+                default:
+                    session.SetError($"Module service not found session id {session.SessionId} for type {type} channel {channelType}.");
+                    break;
             }
         }
         catch (Exception e)
         {
-            session.IsFaulted = true;
-            session.Exception = e.Message;
+            session.SetError(e.Message);
         }
-
-
-        response.SessionData = session;
-        return response;
     }
 }

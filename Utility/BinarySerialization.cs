@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
-using WilsonEvoModuleLibrary.Entities;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
@@ -41,11 +40,20 @@ public static class BinarySerialization
         return serializer.Deserialize(reader);
     }
 
-    public static async Task<object?> DeserializeWithType(byte[] data, Type? type)
+    public static async Task<object?> DeserializeWithType(byte[] data, Type type)
     {
         var ms = new MemoryStream(data);
         await using var reader = new BsonDataReader(ms);
         var o = (JObject)await JToken.ReadFromAsync(reader);
-        return type != null ? o.ToObject(type) : null;
+        return o.ToObject(type);
+    }
+
+    public static T DeserializeOrDefault<T>(this byte[]? raw) where T : new()
+    {
+        if (raw == null) return new();
+        var data = Deserialize<T>(raw);
+        data ??= new();
+
+        return data;
     }
 }
