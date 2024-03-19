@@ -5,7 +5,7 @@ using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Services.Core;
-public interface INodeService { }
+
 public abstract class NodeService<TN> : IExecutionService, IEnvironmentDeploy<TN>, INodeService<TN>, INodeService where TN : BaseTask
 {
     public Task HandleDeployInternal(string projectCode, Dictionary<string, BaseTask> nodes)

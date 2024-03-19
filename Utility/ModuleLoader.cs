@@ -74,12 +74,12 @@ public static class ModuleLoader
         var url = "";
         if (moduleConfig.IsDebug)
         {
-            url = "https://localhost:44335/hub/module";
+            url = "https://wilsonevocore.azurewebsites.net/hub/module";
             Log.Information("Debug Mode enabled");
         }
         else
         {
-            url = "https://core.gestewwai.it/hub/module";
+            url = "https://wilsonevocore.azurewebsites.net/hub/module";
             Log.Information("Production Mode enabled");
         }
 
@@ -102,7 +102,7 @@ public static class ModuleLoader
 
         builder.Services.LoadConfiguration();
         builder.Services.AddSingleton<ModuleClient>();
-        builder.Services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
+        builder.Services.AddSingleton<IModuleChannelClient>(provider => provider.GetRequiredService<ModuleClient>());
         builder.Services.AddHostedService(provider => provider.GetRequiredService<ModuleClient>());
         builder.Services.AddSingleton<NodeServiceMapper>();
         builder.Services.AddMemoryCache();

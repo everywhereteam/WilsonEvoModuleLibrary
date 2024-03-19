@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using WilsonEvoModuleLibrary.Attributes;
+using WilsonEvoModuleLibrary.Common.Attributes;
 using WilsonEvoModuleLibrary.Common.Entities.Values;
 using WilsonEvoModuleLibrary.Entities;
 

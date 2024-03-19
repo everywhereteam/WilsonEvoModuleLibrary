@@ -7,12 +7,13 @@ using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Serilog;
 using WilsonEvoModuleLibrary.Entities;
+using WilsonEvoModuleLibrary.Network;
 using WilsonEvoModuleLibrary.Services;
 using WilsonEvoModuleLibrary.Utility;
 
 namespace WilsonEvoModuleLibrary.Hubs;
 
-public sealed class ModuleClient : IHostedService, IModuleClient
+public sealed class ModuleClient : IHostedService, IModuleChannelClient
 {
     private readonly byte[]? _configurationRaw;
     private readonly HubConnection _connection;
@@ -70,12 +71,6 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         await _connection.DisposeAsync();
     }
 
-    public async Task<ServiceResponse> Execute(ServiceRequest request)
-    {
-        await _mapper.ExecuteService(request.SessionData, request.Type, request.SessionData.ChannelType, request.NodeData);
-        var serviceResponse = new ServiceResponse { SessionData = request.SessionData };
-        return serviceResponse;
-    }
 
     private Task OnReconnecting(Exception? arg)
     {
@@ -89,33 +84,29 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         await _connection.InvokeAsync("RegisterServices", _configurationRaw);
     }
 
-    private async Task<string> EnvironmentUpdate(UpdateRequest updateRequest)
-    {
-        return await _mapper.UpdateService(updateRequest);
-    }
-
-    public async Task<Result<SessionData>> Start(object channel, string envCode, SessionData? session = null, CancellationToken token = default)
+    public async Task<Result<SessionData>> Start(string shortUrl, string? channelName = "",SessionData session = null, CancellationToken token = default)
     {
         if (_connection.State != HubConnectionState.Connected)
         {
-            return Result.Fail($"Error the module was waiting to connect with the server: {_connection.State.ToString()}");
+           return Result.Fail($"Error the module was waiting to connect with the server: {_connection.State.ToString()}");
         }
 
         session ??= new SessionData();
-        session.ChannelType = channel.GetType().Name;
-        session.CurrentShortUrl = envCode;
+        session.ChannelType = channelName;
+        session.CurrentShortUrl = shortUrl;
         try
         {
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
-            return Result.Ok(response);
+            return response;
         }
         catch (Exception ex)
         {
+            
             return Result.Fail($"Error with the module on the server communication on Start: {ex.Message} \n {ex.StackTrace} ");
         }
     }
 
-    public async Task<Result<SessionData>> Next(string sessionId, object? request, CancellationToken token = default)
+    public async Task<Result<SessionData>> Next(string sessionId, object? requestData, CancellationToken token)
     {
         if (_connection.State != HubConnectionState.Connected)
         {
@@ -124,9 +115,9 @@ public sealed class ModuleClient : IHostedService, IModuleClient
 
         try
         {
-            var rawBin = request != null ? BinarySerialization.Serialize(request) : null;
+            var rawBin = requestData != null ? BinarySerialization.Serialize(requestData) : null;
             var response = await _connection.InvokeAsync<SessionData>("Next", sessionId, rawBin, token);
-            return Result.Ok(response);
+            return response;
         }
         catch (Exception ex)
         {
@@ -134,9 +125,39 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         }
     }
 
+    public Task RegisterServices(ModelsConfiguration configuration, CancellationToken token = default)
+    {
+        throw new NotImplementedException();
+    }
+
+
     private Task Closed(Exception? error)
     {
         _logger.Warning($"[WilsonModule] Connection closed with the master. \n {error?.Message} \n {error?.StackTrace}");
         return Task.CompletedTask;
     }
+
+    public async Task<ServiceResponse> Execute(ServiceRequest request)
+    {
+        await _mapper.ExecuteService(request.SessionData, request.Type, request.SessionData.ChannelType, request.NodeData);
+        var serviceResponse = new ServiceResponse { SessionData = request.SessionData };
+        return serviceResponse;
+    }
+
+    public async Task<string> EnvironmentUpdate(UpdateRequest updateRequest)
+    {
+        return await _mapper.UpdateService(updateRequest);
+    }
+
+
+    public Task<ServiceResponse> Execute(string connectionId, ServiceRequest request, CancellationToken token)
+    {
+        
+    }
+
+    public Task<string> EnvironmentUpdate(string connectionId, UpdateRequest updateRequest, CancellationToken token)
+    {
+        throw new NotImplementedException();
+    }
+
 }

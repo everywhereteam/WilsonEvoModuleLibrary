@@ -5,7 +5,7 @@ using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Services.Core;
-                    public interface IAsyncNodeService{}
+
 public abstract class AsyncNodeService<TN> : IAsyncExecutionService, IEnvironmentDeploy<TN>, IAsyncNodeService<TN>, IAsyncNodeService where TN : BaseTask
 {
     public Task Execute(in object nodeData, ref SessionData sessionDataData, ref string output)
