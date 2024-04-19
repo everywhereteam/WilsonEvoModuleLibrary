@@ -23,7 +23,7 @@ namespace WilsonEvoModuleLibrary.Services
 
         public Result<T> GetConfiguration<T>(SessionData session)
         {
-            var key = $"{session.CurrentShortUrl}";
+            var key = $"{session.ProcessShortUrl}";
             if (_cache.TryGetValue(key, out T? value))
             {
                 if (value != null)
@@ -33,7 +33,7 @@ namespace WilsonEvoModuleLibrary.Services
             }
 
 
-            var raw = session.ServiceSecrets;
+            var raw = session.ChannelConfiguration;
             if (raw == null)
             {
                 return Result.Fail($"The configuration is empty or null for the type: {typeof(T).Name}");

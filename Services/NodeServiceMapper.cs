@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentResults;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Bson;
-using Newtonsoft.Json.Linq;
 using WilsonEvoModuleLibrary.Entities;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 using WilsonEvoModuleLibrary.Utility;
@@ -115,11 +111,11 @@ public sealed class NodeServiceMapper
         var output = "ok";
         try
         {
-            if (!GetServiceType(request.Type, request.SessionData.ChannelType, out var serviceType))
+            if (!GetServiceType(request.Type, request.SessionData.CommunicationChannel, out var serviceType))
             {
-                session.Exception = $"Missing service for: {request.Type} and {request.SessionData.ChannelType}"; //too see
-                session.CurrentOutput = "error";
-                session.IsFaulted = true;
+                session.SessionExceptionDetails = $"Missing service for: {request.Type} and {request.SessionData.CommunicationChannel}"; //too see
+                session.ProcessCurrentOutput = "error";
+                session.SessionEncounteredError = true;
             }
             else
             {
@@ -128,9 +124,9 @@ public sealed class NodeServiceMapper
                 // var node = await ReadSessionData(request, );
                 if (node == null)
                 {
-                    session.IsFaulted = true;
-                    session.Exception = $"No data in {request.Type}.";
-                    session.CurrentOutput = "error";
+                    session.SessionEncounteredError = true;
+                    session.SessionExceptionDetails = $"No data in {request.Type}.";
+                    session.ProcessCurrentOutput = "error";
                 }
                 else
                 {
@@ -138,27 +134,26 @@ public sealed class NodeServiceMapper
                     {
                         await syncService.Execute(in node, ref session, ref output);
                     }
-                    else if (service is IAsyncExecutionService asyncService && !session.WaitingCallback)
+                    else if (service is IAsyncExecutionService asyncService && !session.IsAwaitingCallback)
                     {
+                        session.Await();
                         await asyncService.Execute(in node, ref session, ref output);
-                        session.WaitingCallback = true;
-                        session.ContinueExecution = false;
                     }
-                    else if (service is IAsyncExecutionService asyncServiceCallback && session.WaitingCallback)
+                    else if (service is IAsyncExecutionService asyncServiceCallback && session.IsAwaitingCallback)
                     {
+                        session.IsAwaitingCallback = false;
                         await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
-                        session.WaitingCallback = false;
                     }
                     else
                     {
                         //this is shit where i go?          
-                        session.WaitingCallback = false;
-                        session.IsFaulted = true;
-                        session.CurrentOutput = "error";
-                        session.Exception = "Module service not found.";
+                        session.IsAwaitingCallback = false;
+                        session.SessionEncounteredError = true;
+                        session.ProcessCurrentOutput = "error";
+                        session.SessionExceptionDetails = "Module service not found.";
                     }
 
-                    session.CurrentOutput = output;
+                    session.ProcessCurrentOutput = output;
                 }
 
                 
@@ -166,8 +161,8 @@ public sealed class NodeServiceMapper
         }
         catch (Exception e)
         {
-            session.IsFaulted = true;
-            session.Exception = e.Message;
+            session.SessionEncounteredError = true;
+            session.SessionExceptionDetails = e.Message;
         }
 
 

@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
-using WilsonEvoModuleLibrary.Entities;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
@@ -31,6 +30,7 @@ public static class BinarySerialization
         return serializer.Deserialize<T>(reader);
     }
 
+  
     public static object? Deserialize(byte[] data, Action<JsonSerializer>? settings = null)
     {
         using var ms = new MemoryStream(data);

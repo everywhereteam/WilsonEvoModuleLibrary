@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 using BlazorDynamicForm;
 using MessagePack;
 using MessagePack.Formatters;
@@ -15,7 +14,6 @@ using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Serilog;
 using WilsonEvoModuleLibrary.Attributes;
@@ -26,7 +24,6 @@ using WilsonEvoModuleLibrary.Network;
 using WilsonEvoModuleLibrary.Services;
 using WilsonEvoModuleLibrary.Services.Core;
 using WilsonEvoModuleLibrary.Services.Core.Interfaces;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
@@ -79,12 +76,12 @@ public static class ModuleLoader
         var url = "";
         if (moduleConfig.IsDebug)
         {
-            url = "https://localhost:44335/hub/module";
+            url = "https://wilsonevocore.azurewebsites.net/hub/module";
             Log.Information("Debug Mode enabled");
         }
         else
         {       
-            url = "https://core.gestewwai.it/hub/module";
+            url = "https://wilsonevocore.azurewebsites.net/hub/module";
             Log.Information("Production Mode enabled");
         }
 
@@ -136,8 +133,8 @@ public static class ModuleLoader
         }).ConfigureLogging((logging) =>
         {
 #if DEBUG
-            logging.SetMinimumLevel(LogLevel.Trace);
-            logging.AddConsole();
+            //logging.SetMinimumLevel(LogLevel.Trace);
+            //logging.AddConsole();
 #endif
         }).AddMessagePackProtocol(conf =>
         {

@@ -1,52 +1,84 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace WilsonEvoModuleLibrary.Entities;
                      
 public class SessionData
 {
+    public string? Id { get; set; }
     public int ProcessId { get; set; }
     public int ProcessVersion { get; set; }
-    public string SessionId { get; set; }
-    public string CustomerId { get; set; }
-    public string From { get; set; }
-    public string To { get; set; }
-    public bool Test { get; set; }
-    public string ChannelType { get; set; }
-    public string Output { get; set; }
-    /// <summary>
-    /// This is the data incoming from the channel controller.
-    /// </summary>
-    public byte[]? Request { get; set; }
-    /// <summary>
-    /// This is for the data going out from the channel controller.
-    /// </summary>
-    public byte[]? Response { get; set; }
-    public string CurrentNodeId { get; set; }
-    public string CurrentShortUrl { get; set; }
-    public string CurrentOutput { get; set; }
-    public string? CurrentPoolId { get; set; }
-    public bool WaitingCallback { get; set; } = false;
-    public bool ContinueExecution { get; set; } = true;
-    public bool IsFaulted { get; set; } = false;
-    public bool IsEndedCorrectly { get; set; } = false;
-    /// <summary>
-    /// This is true when the session has been already ended, and will not go forward.
-    /// </summary>
-    public bool ItWasAlreadyEnded { get; set; } = false;
-    public string Exception { get; set; } = string.Empty;
-    public Dictionary<string, object> VarData { get; set; } = new();
-    /// <summary>
-    /// This is a special structure to verify that the session is not looping.
-    /// </summary>
-    public Dictionary<string, int> OperationTracker { get; set; } = new();
-    /// <summary>
-    /// This contains the special information for the channel in use.
-    /// </summary>
+   
+    public string UserLanguage { get; set; } = "it-IT";
+    public string? CommunicationChannel { get; set; }
+    public string? ProcessNodeOutput { get; set; }
+    public string? ProcessNodeId { get; set; }
+    public string ProcessShortUrl { get; set; }
+    public string? ProcessCurrentOutput { get; set; }
+    public string? ProcessPoolId { get; set; }
+    public Dictionary<string, int> ProcessOperationTracker { get; set; } = new();
+    //channel
+    public string? ChannelCustomerId { get; set; }
+    public string? ChannelSender { get; set; }
+    public string? ChannelRecipient { get; set; }
+    public byte[]? ChannelInitialRequest { get; set; }
+    public byte[]? ChannelFinalResponse { get; set; }
+    public byte[]? ChannelConfiguration { get; set; }
+    
+    //session
+    public Dictionary<string, object> Data { get; set; } = new();
     public Dictionary<string, string> ChannelData { get; set; } = new();
-    /// <summary>
-    /// This contains the secrets for the service, it's personal for modules.
-    /// </summary>
-    public byte[]? ServiceSecrets { get; set; }
 
+    //status
+    public bool IsAwaitingCallback { get; set; }
+    public bool ShouldContinueExecution { get; set; } = true;
+    public bool SessionEncounteredError { get; set; } = false;
+    public bool SessionCompletedSuccessfully { get; set; } = false;
+    public bool SessionPreviouslyEnded { get; set; } = false;
+    public string SessionExceptionDetails { get; set; } = string.Empty;
+    //stats
+    public bool IsTestSession { get; set; }
+    public string? PreviousSessionId { get; set; }
+    public List<SessionLog> SessionLogs { get; set; } = new();
+    public List<SessionMessage> SessionMessages { get; set; } = new();
+
+
+
+
+}
+
+public class SessionLog
+{
+    //public DateTime Date { get; set; } = DateTime.Now;
+    public string Message { get; set; }
+    public string Type { get; set; }
+}
+
+
+public class SessionMessage
+{
+    //public DateTime Date { get; set; } = DateTime.Now;
+    public string Message { get; set; }
+    public string User { get; set; }
+}
+
+public static class SessionHelper
+{
+    public static void Await(this SessionData session)
+    {
+        session.IsAwaitingCallback = true;
+        session.ShouldContinueExecution = false;
+    }
+
+    public static void Error(this SessionData session, string errorMsg)
+    {
+        session.SessionEncounteredError = true;
+        session.SessionExceptionDetails = errorMsg;
+    }
+
+    public static void AddMessage(this SessionData session, string user, string message)
+    {
+        session.SessionMessages.Add(new SessionMessage(){Message = message, User = user});
+    }
 
 }

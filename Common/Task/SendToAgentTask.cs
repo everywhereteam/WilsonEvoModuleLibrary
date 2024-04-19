@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using BlazorDynamicForm.Attributes.Display;
+using System.Collections.Generic;
 using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Common.Values;
 using WilsonEvoModuleLibrary.Entities;
@@ -10,16 +10,16 @@ namespace WilsonEvoModuleLibrary.Common.Task;
 public class SendToAgentTask : BaseTask
 {
     
-    [Display(Name = "Variables"),DataType("Dictionary")]
+    [DisplayNameForm("Variables")]
     public Dictionary<string, string> Data { get; set; } = new();
 
-    [Display(Name = "Destination"), DataType(DataType.Text)]
+    [DisplayNameForm("Destination")]
     public string Destination { get; set; }
 
-    [Display(Name = "Destination"), DataType(DataType.Text)]
+    [DisplayNameForm("Destination")]
     public string WaitingMessage { get; set; }
 
-    [Display(Name = "Operator Response Timeout"), DataType(DataType.Text)]
+    [DisplayNameForm("Operator Response Timeout")]
     public int OperatorResponseTimeout { get; set; }
 
 

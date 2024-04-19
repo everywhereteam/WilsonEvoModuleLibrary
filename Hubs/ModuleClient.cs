@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentResults;
@@ -91,11 +90,8 @@ public sealed class ModuleClient : IHostedService, IModuleClient
         return await _mapper.ExecuteService(request);
     }
 
-    public async Task<Result<SessionData>> Start(object channel, string shortUrl, SessionData? session = null, CancellationToken token = default)
+    public async Task<Result<SessionData>> Start(SessionData session, CancellationToken token = default)
     {
-        session ??= new SessionData();
-        session.ChannelType = channel.GetType().Name ?? string.Empty;
-        session.CurrentShortUrl = shortUrl;
         try
         {
             var response = await _connection.InvokeAsync<SessionData>("Start", session, token);
@@ -109,9 +105,17 @@ public sealed class ModuleClient : IHostedService, IModuleClient
 
     public async Task<Result<SessionData>> Next(string sessionId, object response, CancellationToken token = default)
     {
-        var rawBin = response != null? BinarySerialization.Serialize(response): null;
-        var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, rawBin, token);
-        return result != null ? Result.Ok(result) : Result.Fail("Session data null");
+        try
+        {
+            var rawBin = response != null ? BinarySerialization.Serialize(response) : null;
+            var result = await _connection.InvokeAsync<SessionData>("Next", sessionId, rawBin, token);
+            return result != null ? Result.Ok(result) : Result.Fail("Session data null");
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(ex.Message);
+        }
+        
     }
 
     private async Task Closed(Exception? error)

@@ -9,19 +9,19 @@ namespace WilsonEvoModuleLibrary.Services.Core;
 public abstract class AsyncNodeServices<TN, TC> : IAsyncExecutionService, IEnvironmentDeploy<TN>, IAsyncNodeServices<TN, TC>
     where TN : BaseTask where TC : class
 {
-    public Task Execute(in object nodeData, ref SessionData sessionDataData, ref string output)
+    public Task Execute(in object nodeData, ref SessionData sessionData, ref string output)
     {
-        return Execute((TN)nodeData, ref sessionDataData, ref output);
+        return Execute((TN)nodeData, ref sessionData, ref output);
     }
 
-    public Task ExecuteCallback(in object nodeData, ref SessionData sessionDataData, ref string output)
+    public Task ExecuteCallback(in object nodeData, ref SessionData sessionData, ref string output)
     {
-        return ExecuteCallback((TN)nodeData, ref sessionDataData, ref output);
+        return ExecuteCallback((TN)nodeData, ref sessionData, ref output);
     }
 
     public abstract Task Execute(in TN nodeData, ref SessionData data, ref string output);
 
-    public abstract Task ExecuteCallback(in TN nodeData, ref SessionData sessionDataData, ref string output);
+    public abstract Task ExecuteCallback(in TN nodeData, ref SessionData sessionData, ref string output);
 
     public Task HandleDeployInternal(string projectCode, Dictionary<string, BaseTask> nodes)
     {
