@@ -5,5 +5,5 @@ namespace WilsonEvoModuleLibrary.Hubs;
 
 public interface IModuleClient
 {
-    public Task<ServiceResponse> Execute(ServiceRequest request);
+   // public Task<ServiceResponse> Execute(ServiceRequest request);
 }

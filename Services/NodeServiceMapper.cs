@@ -26,7 +26,7 @@ public sealed class NodeServiceMapper
     public object? GetService(Type? type)
     {
         try
-        {     
+        {
             if (type != null)
             {
 
@@ -65,31 +65,33 @@ public sealed class NodeServiceMapper
         return true;
     }
 
-    public async Task<string> UpdateService(UpdateRequest updateRequest)
+    public async Task<string> UpdateService(UpdateModuleResponse updateRequest)
     {
         try
         {
-            foreach (var group in updateRequest.Tasks.GroupBy(x => new { x.ModelType, x.ChannelType }))
+            foreach (var request in updateRequest.Environments)
             {
-                if (!GetServiceType(group.Key.ModelType, group.Key.ChannelType, out var serviceType))
+                foreach (var group in request.Tasks.GroupBy(x => new { x.ModelType, x.ChannelType }))
                 {
-                    return $"Missing service for: {group.Key.ModelType} and {group.Key.ChannelType}";
-                }
-                var service = GetService(serviceType);
-                if (service != null)
-                {
-                  
-                    var listNodes = new Dictionary<string,BaseTask>();
-                    foreach (var task in group)
+                    if (!GetServiceType(group.Key.ModelType, group.Key.ChannelType, out var serviceType))
                     {
-                        var data = await BinarySerialization.DeserializeWithType(task.data, serviceType.GenericTypeArguments[0]);
-                        listNodes.Add(task.NodeId,(BaseTask)data);
+                        return $"Missing service for: {group.Key.ModelType} and {group.Key.ChannelType}";
                     }
-                    if (service is IEnvironmentDeploy serviceI)
+                    var service = GetService(serviceType);
+                    if (service != null)
                     {
-                        await serviceI.HandleDeployInternal(updateRequest.projectCode,listNodes);
-                       
-                    } 
+
+                        var listNodes = new Dictionary<string, BaseTask>();
+                        foreach (var task in group)
+                        {
+                            var data = await BinarySerialization.DeserializeWithType(task.data, serviceType.GenericTypeArguments[0]);
+                            listNodes.Add(task.NodeId, (BaseTask)data);
+                        }
+                        if (service is IEnvironmentDeploy serviceI)
+                        {
+                            await serviceI.HandleDeployInternal(request.ShortUrl, listNodes);
+                        }
+                    }
                 }
             }
         }
@@ -108,7 +110,7 @@ public sealed class NodeServiceMapper
         var session = request.SessionData;
 
         var response = new ServiceResponse();
-        var output = "ok";
+        session.ProcessCurrentOutput = "ok";
         try
         {
             if (!GetServiceType(request.Type, request.SessionData.CommunicationChannel, out var serviceType))
@@ -132,17 +134,17 @@ public sealed class NodeServiceMapper
                 {
                     if (service is IExecutionService syncService)
                     {
-                        await syncService.Execute(in node, ref session, ref output);
+                        await syncService.Execute(node, session);
                     }
                     else if (service is IAsyncExecutionService asyncService && !session.IsAwaitingCallback)
                     {
                         session.Await();
-                        await asyncService.Execute(in node, ref session, ref output);
+                        await asyncService.Execute(node, session);
                     }
                     else if (service is IAsyncExecutionService asyncServiceCallback && session.IsAwaitingCallback)
                     {
                         session.IsAwaitingCallback = false;
-                        await asyncServiceCallback.ExecuteCallback(in node, ref session, ref output);
+                        await asyncServiceCallback.ExecuteCallback(node, session);
                     }
                     else
                     {
@@ -153,10 +155,9 @@ public sealed class NodeServiceMapper
                         session.SessionExceptionDetails = "Module service not found.";
                     }
 
-                    session.ProcessCurrentOutput = output;
                 }
 
-                
+
             }
         }
         catch (Exception e)

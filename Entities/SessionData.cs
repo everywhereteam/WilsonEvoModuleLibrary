@@ -30,21 +30,19 @@ public class SessionData
     public Dictionary<string, string> ChannelData { get; set; } = new();
 
     //status
-    public bool IsAwaitingCallback { get; set; }
-    public bool ShouldContinueExecution { get; set; } = true;
+    public bool IsAwaitingCallback { get; set; } = false;
+    public bool ContinueExecution { get; set; } = true;
     public bool SessionEncounteredError { get; set; } = false;
-    public bool SessionCompletedSuccessfully { get; set; } = false;
+    public bool SessionCompleted { get; set; } = false;
     public bool SessionPreviouslyEnded { get; set; } = false;
     public string SessionExceptionDetails { get; set; } = string.Empty;
+    public int? SessionStepId { get; set; }
     //stats
     public bool IsTestSession { get; set; }
     public string? PreviousSessionId { get; set; }
     public List<SessionLog> SessionLogs { get; set; } = new();
     public List<SessionMessage> SessionMessages { get; set; } = new();
-
-
-
-
+    public bool IsAwatingResponse { get; set; } = false;
 }
 
 public class SessionLog
@@ -67,7 +65,7 @@ public static class SessionHelper
     public static void Await(this SessionData session)
     {
         session.IsAwaitingCallback = true;
-        session.ShouldContinueExecution = false;
+        session.ContinueExecution = false;
     }
 
     public static void Error(this SessionData session, string errorMsg)

@@ -5,6 +5,6 @@ namespace WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 internal interface IAsyncExecutionService
 {
-    Task Execute(in object nodeData, ref SessionData sessionData, ref string output);
-    Task ExecuteCallback(in object nodeData, ref SessionData sessionData, ref string output);
+    Task Execute(object nodeData, SessionData sessionData);
+    Task ExecuteCallback(object nodeData, SessionData sessionData);
 }

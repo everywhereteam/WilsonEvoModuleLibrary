@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using Azure.Messaging.ServiceBus;
 using BlazorDynamicForm;
 using MessagePack;
 using MessagePack.Formatters;
@@ -71,6 +72,7 @@ public static class ModuleLoader
         WilsonSettings.NewtonsoftSerializer = JsonSerializer.Create(settings);
 
         var moduleConfig = builder.Configuration.GetSection("WilsonConfig").Get<WilsonConfig>() ?? new WilsonConfig();
+        builder.Services.Configure<WilsonConfig>(builder.Configuration.GetSection("WilsonConfig"));
         if (string.IsNullOrWhiteSpace(moduleConfig.Token))
             throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
         var url = "";
@@ -105,53 +107,15 @@ public static class ModuleLoader
 
 
         builder.Services.LoadConfiguration();
-        builder.Services.AddSingleton<ModuleClient>();
-        builder.Services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
-        builder.Services.AddHostedService(provider => provider.GetRequiredService<ModuleClient>());
+        builder.Services.AddScoped<AzureBusSenderService>();
+        builder.Services.AddScoped<ModuleClient>();
+       // builder.Services.AddSingleton<IModuleClient>(provider => provider.GetRequiredService<ModuleClient>());
+        builder.Services.AddHostedService<AzureBusReceiverService>();
         builder.Services.AddSingleton<NodeServiceMapper>();
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<IConfigStorageService, ConfigStorageService>();
-        builder.Services.AddSingleton(new HubConnectionBuilder().WithUrl(url, options =>
-        {
-            options.Transports = HttpTransportType.WebSockets;
-            // options.AccessTokenProvider??
+        builder.Services.AddSingleton(new ServiceBusClient(moduleConfig.ServiceBus));
 
-            options.SkipNegotiation = true;
-            options.ApplicationMaxBufferSize = 10_000_000;
-            options.ClientCertificates = new X509CertificateCollection();
-            options.Cookies = new CookieContainer();
-            options.CloseTimeout = TimeSpan.FromSeconds(5);
-            options.DefaultTransferFormat = TransferFormat.Text; //check the other one
-            options.Credentials = null;
-            options.Proxy = null;
-            options.UseDefaultCredentials = true;
-            options.TransportMaxBufferSize = 10_000_000;
-            options.WebSocketConfiguration = null; //TOCHEKC
-            options.WebSocketFactory = null;
-            options.Headers.Add("api-key", moduleConfig.Token);
-
-        }).ConfigureLogging((logging) =>
-        {
-#if DEBUG
-            //logging.SetMinimumLevel(LogLevel.Trace);
-            //logging.AddConsole();
-#endif
-        }).AddMessagePackProtocol(conf =>
-        {
-            var resolver = MessagePack.Resolvers.CompositeResolver.Create(
-                 new IMessagePackFormatter[] { },
-                 new IFormatterResolver[]
-                 {
-                    MessagePack.Resolvers.ContractlessStandardResolver.Instance
-                 });
-            conf.SerializerOptions = MessagePackSerializerOptions.Standard
-             .WithResolver(resolver)
-                .WithSecurity(MessagePackSecurity.UntrustedData)
-                .WithCompression(MessagePackCompression.Lz4Block)
-                .WithAllowAssemblyVersionMismatch(true)
-                .WithOldSpec()
-                .WithOmitAssemblyVersion(true);
-        }));
     }
 
 

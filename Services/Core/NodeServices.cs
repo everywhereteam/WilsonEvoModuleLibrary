@@ -9,12 +9,12 @@ namespace WilsonEvoModuleLibrary.Services.Core;
 public abstract class NodeServices<TN, TC> : IExecutionService, IEnvironmentDeploy<TN>, INodeServices<TN, TC>
     where TN : BaseTask where TC : class
 {
-    public Task Execute(in object nodeData, ref SessionData data, ref string output)
+    public Task Execute(object nodeData, SessionData data)
     {
-        return Execute((TN)nodeData, ref data, ref output);
+        return Execute((TN)nodeData, data);
     }
 
-    public abstract Task Execute(in TN nodeData, ref SessionData data, ref string output);
+    public abstract Task Execute( TN nodeData, SessionData data);
 
     public Task HandleDeployInternal(string projectCode, Dictionary<string, BaseTask> nodes)
     {

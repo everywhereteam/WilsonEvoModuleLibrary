@@ -5,5 +5,5 @@ namespace WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 internal interface INodeService<TN> where TN : BaseTask
 {
-    Task Execute(in TN nodeData, ref SessionData data, ref string output);
+    Task Execute( TN nodeData, SessionData data);
 }
