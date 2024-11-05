@@ -1,11 +1,10 @@
 ﻿using WilsonEvoModuleLibrary.Attributes;
 using WilsonEvoModuleLibrary.Common.Values;
-using WilsonEvoModuleLibrary.Entities;
+using WilsonEvoModuleLibrary.Services.Core;
 
 namespace WilsonEvoModuleLibrary.Common.Task;
 
 [Task("Start", Categories.Flow)]
-public class StartTask : BaseTask
+public class StartTask : ITask
 {
-        
 }

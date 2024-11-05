@@ -5,22 +5,26 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Newtonsoft.Json.Linq;
-using WilsonEvoModuleLibrary.Entities;
+using WilsonEvoCoreLibrary.Core.Models;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
 public static class StringTemplate
 {
-    public static string Interpolate(string template,SessionData data)
+    public delegate bool ChannelAttributeValue(TaggedValue tag);
+
+    private static readonly Dictionary<string, Func<TaggedValue, ProcessSession, string, string>> Operations = new() { { "date-format", ParseDate }, { "regex", RegexText }, { "dotted", DottedSpacedText } };
+
+    public static string Interpolate(string template, ProcessSession session)
     {
-        var jObject = JObject.FromObject(new Dictionary<string, object>(data.Data));
-        AddToken(jObject, "Id", data.Id);
-        AddToken(jObject, "ChannelCustomerId", data.ChannelCustomerId);
-        AddToken(jObject, "ChannelSender", data.ChannelSender);
-        AddToken(jObject, "ChannelRecipient", data.ChannelRecipient);
-        AddToken(jObject, "UserLanguage", data.UserLanguage);
-        AddToken(jObject, "CommunicationChannel", data.CommunicationChannel);
-        AddToken(jObject, "IsTestSession", data.IsTestSession);
+        var jObject = JObject.FromObject(session.Data.GetProperties());
+        AddToken(jObject, "Id", session.Id);
+        AddToken(jObject, "ChannelCustomerId", session.ChannelSessionId);
+        AddToken(jObject, "ChannelSender", session.ChannelSender);
+        AddToken(jObject, "ChannelRecipient", session.ChannelRecipient);
+        AddToken(jObject, "UserLanguage", session.UserLanguage);
+        AddToken(jObject, "CommunicationChannel", session.ChannelName);
+        AddToken(jObject, "IsTestSession", session.IsTest);
         return Regex.Replace(template, @"\{[\w\.]+\}", match =>
         {
             var path = match.Value.Trim('{', '}');
@@ -29,53 +33,48 @@ public static class StringTemplate
         });
     }
 
-    private static void AddToken(JObject jobject, string name, object value){
+    private static void AddToken(JObject jobject, string name, object value)
+    {
         if (value != null && !string.IsNullOrEmpty(value.ToString()))
+        {
             jobject.Add(name, JToken.FromObject(value));
+        }
     }
 
-    private static Dictionary<string, Func<TaggedValue, SessionData, string, string>> Operations = new()
-    {
-        {"date-format",ParseDate},
-        {"regex", RegexText},
-        {"dotted", DottedSpacedText},
-        
-    };
-
-    private static string RegexText(TaggedValue tag, SessionData session, string text)
+    private static string RegexText(TaggedValue tag, ProcessSession session, string text)
     {
         var match = Regex.Match(text, tag.Value);
         return match.Success ? match.Value : "";
     }
-    private static string DottedSpacedText(TaggedValue tag, SessionData session, string text)
+
+    private static string DottedSpacedText(TaggedValue tag, ProcessSession session, string text)
     {
         // Convert the input string to a character array
-        char[] charactersArray = text.ToCharArray();
+        var charactersArray = text.ToCharArray();
 
         // Join the characters with a dot and space between them
-        string stringWithSpaces = string.Join(". ", charactersArray);
+        var stringWithSpaces = string.Join(". ", charactersArray);
 
         return stringWithSpaces;
     }
-    private static string ParseDate(TaggedValue tag, SessionData session, string text)
+
+    private static string ParseDate(TaggedValue tag, ProcessSession session, string text)
     {
         var culture = CultureInfo.GetCultureInfo(session.UserLanguage);
         var info = DateTimeFormatInfo.GetInstance(culture);
         var dateTimePattern = @"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z\b";
         var matches = Regex.Matches(text, dateTimePattern);
         foreach (Match match in matches)
-        {
             if (DateTime.TryParse(match.Value, culture, DateTimeStyles.None, out var parsedDateTime))
             {
                 var newFormattedDateTime = parsedDateTime.ToString(info.LongDatePattern, culture);
                 text = Regex.Replace(text, Regex.Escape(match.Value), newFormattedDateTime);
             }
-        }
+
         return text;
     }
 
-    public delegate bool ChannelAttributeValue(TaggedValue tag);
-    public static string ProcessString(string text, SessionData session, Dictionary<string, ChannelAttributeValue>? scoreAction)
+    public static string ProcessString(string text, ProcessSession session, Dictionary<string, ChannelAttributeValue>? scoreAction)
     {
         //1° Step add values in {}
         var textInterpolated = Interpolate(text, session);
@@ -89,28 +88,19 @@ public static class StringTemplate
             {
                 var outputText = attribute.Text;
                 foreach (var tag in attribute.Attributes)
-                {
                     if (Operations.ContainsKey(tag.Tag))
                     {
                         outputText = Operations[tag.Tag].Invoke(tag, session, outputText);
                     }
-                }
 
                 builder.Append(outputText);
             }
+
             return builder.ToString();
         }
-        else
-        {
-            return textInterpolated;
-        }
+
+        return textInterpolated;
     }
-
-    public record TaggedValue(string Tag, string Value);
-
-    public record TextWithAttributes(string Text, float Score, List<TaggedValue> Attributes);
-
-    public record TextParsingResult(string InitialText, bool Success, List<TextWithAttributes>? ParsedAttributes);
 
 
     public static TextParsingResult ParseStringAttributes(string input, string tag, Dictionary<string, ChannelAttributeValue>? scoreAction)
@@ -119,12 +109,14 @@ public static class StringTemplate
         {
             return new TextParsingResult(input, false, null);
         }
+
         if (Regex.IsMatch(input, "<.*?>"))
         {
             if (!input.TrimStart().StartsWith("<root>"))
             {
                 input = $"<root>{input}</root>";
             }
+
             try
             {
                 var xmlDoc = new XmlDocument();
@@ -132,7 +124,7 @@ public static class StringTemplate
 
                 var textNodes = xmlDoc.GetElementsByTagName(tag);
                 var result = new List<TextWithAttributes>();
-                scoreAction ??= new();
+                scoreAction ??= new Dictionary<string, ChannelAttributeValue>();
                 foreach (XmlNode node in textNodes)
                 {
                     var score = 0f;
@@ -164,9 +156,13 @@ public static class StringTemplate
                 return new TextParsingResult(input, false, null);
             }
         }
-        else
-        {
-            return new TextParsingResult(input, false, null);
-        }
+
+        return new TextParsingResult(input, false, null);
     }
+
+    public record TaggedValue(string Tag, string Value);
+
+    public record TextWithAttributes(string Text, float Score, List<TaggedValue> Attributes);
+
+    public record TextParsingResult(string InitialText, bool Success, List<TextWithAttributes>? ParsedAttributes);
 }

@@ -1,23 +1,18 @@
-﻿namespace WilsonEvoModuleLibrary.Entities;
+﻿using WilsonEvoCoreLibrary.Core.Models;
+
+namespace WilsonEvoModuleLibrary.Entities;
 
 public class ServiceResponse
 {
-    public ServiceResponse()
-    {
-    }
+    public ProcessSession Session { get; set; }
+    // public List<ProcessChatHistory> ChatHistory { get; set; } = new List<ProcessChatHistory>();
+    //  public List<Log> Logs { get; set; }
 
-    public ServiceResponse(SessionData sessionData)
-    {
-        SessionData = sessionData;
-    }
+    //public bool IsFailed { get; set; } = false;
+    // public string? ExceptionMessage { get; set; }
 
-    public SessionData SessionData { get; set; }
-
-    public bool IsFailed { get; set; } = false;
-    public string? ExceptionMessage { get; set; }
-    
 
     //Metrics
-    public long ExecutionTime { get; set; }
-
+    public uint ExecutionTime { get; set; }
+    public float ModuleUsage { get; set; }
 }

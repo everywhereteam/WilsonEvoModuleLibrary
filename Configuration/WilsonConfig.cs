@@ -1,11 +1,9 @@
-﻿namespace WilsonEvoModuleLibrary.Configuration
-{
-    public class WilsonConfig
-    {
+﻿namespace WilsonEvoModuleLibrary.Configuration;
 
-        public string Token { get; set; }
-        public bool IsDebug { get; set; } = false;
-        public string ChannelName { get; set; }
-        public string ServiceBus { get; set; }
-    }
+public class WilsonConfig
+{
+    public string Token { get; set; }
+    public bool IsDebug { get; set; } = false;
+    public string ChannelName { get; set; }
+    public string ServiceBus { get; set; }
 }

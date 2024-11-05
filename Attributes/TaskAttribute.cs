@@ -1,14 +1,12 @@
-﻿using BlazorDynamicForm.Entities;
-using System;
+﻿using System;
+using BlazorDynamicForm.Entities;
 
 namespace WilsonEvoModuleLibrary.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public class TaskAttribute : Attribute
 {
-    public TaskAttribute(string name, string category, string cssIcon, string cssNode, string description,
-        string documentationUrl,
-        bool hasDynamicOutput, params string[] defaultOutputs)
+    public TaskAttribute(string name, string category, string cssIcon, string cssNode, string description, string documentationUrl, bool hasDynamicOutput, params string[] defaultOutputs)
     {
         Name = name;
         Category = category;
@@ -20,8 +18,7 @@ public class TaskAttribute : Attribute
         CssNode = cssNode;
     }
 
-    public TaskAttribute(string name, string category, string description, string documentationUrl,
-        bool hasDynamicOutput, params string[] defaultOutputs)
+    public TaskAttribute(string name, string category, string description, string documentationUrl, bool hasDynamicOutput, params string[] defaultOutputs)
     {
         Name = name;
         Category = category;
@@ -41,6 +38,7 @@ public class TaskAttribute : Attribute
     public TaskAttribute()
     {
     }
+
     public string Name { get; set; }
 
     public string Category { get; set; }

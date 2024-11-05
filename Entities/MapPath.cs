@@ -7,17 +7,15 @@ public struct MapPath
     public string TaskType { get; }
     public string TaskChannel { get; }
 
-    public MapPath(string taskType, string taskChannel)
+    public MapPath(string taskType, string? taskChannel)
     {
         TaskType = taskType;
-        TaskChannel = taskChannel;
+        TaskChannel = taskChannel ?? string.Empty;
     }
 
     public override bool Equals(object obj)
     {
-        return obj is MapPath key &&
-               TaskType == key.TaskType &&
-               TaskChannel == key.TaskChannel;
+        return obj is MapPath key && TaskType == key.TaskType && TaskChannel == key.TaskChannel;
     }
 
     public override int GetHashCode()

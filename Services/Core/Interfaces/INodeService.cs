@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
-using WilsonEvoModuleLibrary.Entities;
+using WilsonEvoCoreLibrary.Core.Models;
 
 namespace WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
-internal interface INodeService<TN> where TN : BaseTask
+internal interface INodeService<TN> where TN : ITask
 {
-    Task Execute( TN nodeData, SessionData data);
+    Task Execute(TN nodeData, ProcessSession session);
 }
