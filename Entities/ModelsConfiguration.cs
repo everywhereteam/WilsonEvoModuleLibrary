@@ -24,7 +24,7 @@ public class TaskDefinition
 {
     public string Type { get; set; }
     public string Name { get; set; }
-    public byte[] RawConfiguration { get; set; }
+    public byte[] RawConfiguration { get; set; } = new byte[]{};
 }
 
 public class ProcessorDefinition

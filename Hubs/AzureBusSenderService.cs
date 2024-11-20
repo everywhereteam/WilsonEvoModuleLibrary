@@ -3,47 +3,31 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus;
 using FluentResults;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using WilsonEvoCoreLibrary.Core.Utility;
-using WilsonEvoModuleLibrary.Configuration;
 using WilsonEvoModuleLibrary.Entities;
 
 namespace WilsonEvoModuleLibrary.Hubs;
 
-public sealed class AzureBusSenderService(ServiceBusClient serviceBusClient, IOptions<WilsonConfig> options)
+public interface IModuleSender
 {
-    public async Task SendTriggerUpdateAsync(CancellationToken token = default)
+    Task SendTriggerUpdateAsync(ModuleConfiguration configuration, CancellationToken token = default);
+    Task Response(ServiceResponse response, CancellationToken token);
+    Task<Result> Start(string shortUrl, string channelName, object? request, string? sessionToken = null, CancellationToken token = default);
+    Task<Result> Next(string sessionToken, object response, CancellationToken token = default);
+}
+
+public sealed class AzureBusSender(ServiceBusClient serviceBusClient) : IUpdateModuleService, IModuleSender
+{
+    public async Task SendTriggerUpdateAsync(ModuleConfiguration configuration, CancellationToken token = default)
     {
         var sender = serviceBusClient.CreateSender("broadcast");
 
         var message = new ServiceBusMessage
         {
             // SessionId = ne,
-            ApplicationProperties = { { "AccessToken", options.Value.Token }, { "Name", "trigger" } }
+            ApplicationProperties = { { "AccessToken", configuration.Token }, { "Name", "trigger" } }
         };
-
-        await sender.SendMessageAsync(message, token);
-    }
-
-    public async Task UpdateConfigurationAsync(ModelsConfiguration configuration, CancellationToken token)
-    {
-        var data = BinarySerialization.Serialize(configuration, settings =>
-        {
-            settings.TypeNameHandling = TypeNameHandling.Auto;
-            settings.NullValueHandling = NullValueHandling.Ignore;
-        });
-        var sender = serviceBusClient.CreateSender("moduleconfiguration");
-
-        var message = new ServiceBusMessage
-        {
-            // SessionId = ne,
-            ApplicationProperties = { { "AccessToken", options.Value.Token } }
-        };
-        if (data != null)
-        {
-            message.Body = new BinaryData(data);
-        }
 
         await sender.SendMessageAsync(message, token);
     }
@@ -57,14 +41,17 @@ public sealed class AzureBusSenderService(ServiceBusClient serviceBusClient, IOp
         await sender.SendMessageAsync(messageResponse, token);
     }
 
-    public async Task<Result> Start(string shortUrl, string channelName, object? request, CancellationToken token = default)
+    public async Task<Result> Start(string shortUrl, string channelName, object? request, string? sessionToken = null, CancellationToken token = default)
     {
         try
         {
             var rawBinary = BinarySerialization.Serialize(request);
             var sender = serviceBusClient.CreateSender("startworkflow");
-
-            var message = new ServiceBusMessage { SessionId = Guid.NewGuid().ToString(), ApplicationProperties = { { "shortUrl", shortUrl }, { "channelName", channelName } } };
+            if (string.IsNullOrEmpty(sessionToken))
+            {
+                sessionToken = Guid.NewGuid().ToString();
+            }
+            var message = new ServiceBusMessage { SessionId = sessionToken, ApplicationProperties = { { "shortUrl", shortUrl }, { "channelName", channelName } } };
             if (request != null)
             {
                 message.Body = new BinaryData(rawBinary);
@@ -79,7 +66,7 @@ public sealed class AzureBusSenderService(ServiceBusClient serviceBusClient, IOp
         }
     }
 
-    public async Task<Result> Run(string sessionId, object response, CancellationToken token = default)
+    public async Task<Result> Next(string sessionId, object response, CancellationToken token = default)
     {
         try
         {
@@ -95,5 +82,28 @@ public sealed class AzureBusSenderService(ServiceBusClient serviceBusClient, IOp
         {
             return Result.Fail(ex.Message);
         }
+    }
+
+    public async Task UpdateModuleConfigurationAsync(ModuleConfiguration configuration, CancellationToken token)
+    {
+        var moduleConfiguration = configuration.GetConfiguration();
+        var data = BinarySerialization.Serialize(moduleConfiguration, settings =>
+        {
+            settings.TypeNameHandling = TypeNameHandling.Auto;
+            settings.NullValueHandling = NullValueHandling.Ignore;
+        });
+        var sender = serviceBusClient.CreateSender("moduleconfiguration");
+
+        var message = new ServiceBusMessage
+        {
+            // SessionId = ne,
+            ApplicationProperties = { { "AccessToken", configuration.Token } }
+        };
+        if (data != null)
+        {
+            message.Body = new BinaryData(data);
+        }
+
+        await sender.SendMessageAsync(message, token);
     }
 }

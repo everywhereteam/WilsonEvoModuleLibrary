@@ -76,6 +76,8 @@ public static class StringTemplate
 
     public static string ProcessString(string text, ProcessSession session, Dictionary<string, ChannelAttributeValue>? scoreAction)
     {
+        if (string.IsNullOrEmpty(text))
+            return string.Empty;
         //1° Step add values in {}
         var textInterpolated = Interpolate(text, session);
         //parse the the text for special rules

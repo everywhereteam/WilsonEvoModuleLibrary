@@ -5,14 +5,12 @@ using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
-public class ServiceProvider(IServiceProvider _serviceProvider)
+public class ServiceProvider(ModuleConfiguration config, IServiceProvider _serviceProvider)
 {
-    public Dictionary<(string taskType, string? channel), (Type taskType, Type executor, ExecutorType type)> _executorTypes = new();
-
-
+ 
     public (Type, ITaskExecutor, ExecutorType) GetExecutor(string taskType, string? channel)
     {
-        if (_executorTypes.TryGetValue((taskType, channel), out var executorType))
+        if (config.ExecutorTypes.TryGetValue((taskType, channel), out var executorType))
         {
             // Resolve a new instance from the service provider
             var executorInstance = (ITaskExecutor)_serviceProvider.GetService(executorType.executor);

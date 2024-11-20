@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,21 +61,23 @@ public static class ModuleLoader
         builder.UseDefaultWilsonLogs();
 
 
-        var moduleConfig = builder.Configuration.GetSection("WilsonConfig").Get<WilsonConfig>() ?? new WilsonConfig();
-        builder.Services.Configure<WilsonConfig>(builder.Configuration.GetSection("WilsonConfig"));
-        if (string.IsNullOrWhiteSpace(moduleConfig.Token))
-        {
-            throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
-        }
+        //var moduleConfig = builder.Configuration.GetSection("WilsonConfig").Get<WilsonConfig>() ?? new WilsonConfig();
+        //builder.Services.Configure<WilsonConfig>(builder.Configuration.GetSection("WilsonConfig"));
+        //if (string.IsNullOrWhiteSpace(moduleConfig.Token))
+        //{
+        //    throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
+        //}
 
         Log.Information(template);
-        builder.Services.AddScoped<ModuleClient>();
         builder.Services.AddSingleton<NodeServiceExecutor>();
-        builder.Services.AddMemoryCache();
-
+        builder.Services.AddSingleton<ServiceProvider>();
+        builder.Services.AddScoped<ModuleDeploymentService>();
+        builder.Services.AddHostedService<ModuleConfigurationService>();
         var conf = new ModuleConfiguration();
         configuration?.Invoke((conf, builder.Services));
         ShowConfiguration(conf);
+
+        builder.Services.AddSingleton(conf);
     }
 
     public static void Services(this (ModuleConfiguration Configuration, IServiceCollection Collection) builder, Action<ServiceRegistry> service)
@@ -83,11 +86,14 @@ public static class ModuleLoader
         service?.Invoke(registry);
         builder.Configuration.ExecutorTypes = registry.ExecutorTypes;
     }
+    public static void Token(this (ModuleConfiguration Configuration, IServiceCollection Collection) builder, string token)
+    {
+        builder.Configuration.Token = token;
+    }
 
     public static void Tasks(this (ModuleConfiguration Configuration, IServiceCollection Collection) builder, Action<TaskRegistry> tasks)
     {
-        var registry = new TaskRegistry();
-        tasks?.Invoke(registry);
+        tasks?.Invoke(builder.Configuration.TaskRegistry);
     }
 
     public class DeployRegistry
@@ -120,10 +126,34 @@ public static class ModuleLoader
     {
         var settings = new AzureBusSettings();
         settingsAction?.Invoke(settings);
+
+
+        var adminClient = new ServiceBusAdministrationClient(settings.ConnectionString);
+
+        // Check if the subscription already exists
+        if (!adminClient.SubscriptionExistsAsync("broadcast", settings.ProcessorName).GetAwaiter().GetResult())
+        {
+            adminClient.CreateSubscriptionAsync(new CreateSubscriptionOptions("broadcast", settings.ProcessorName)).GetAwaiter().GetResult();
+            Console.WriteLine($"Subscription 'broadcast' created.");
+        }
+        else
+        {
+            Console.WriteLine($"Subscription 'broadcast' already exists.");
+        }
+
+        
         builder.Services.AddSingleton(new ServiceBusClient(settings.ConnectionString));
         builder.Services.AddHostedService<AzureBusReceiverService>();
-        builder.Services.AddScoped<AzureBusSenderService>();
+
+        builder.Services
+            .AddScoped<AzureBusSender>()
+            .AddScoped<IModuleSender>(x => x.GetRequiredService<AzureBusSender>())
+            .AddScoped<IUpdateModuleService>(x => x.GetRequiredService<AzureBusSender>());
+
+        builder.Configuration.AzureBusSettings = settings;
     }
+
+    
 
     private static void ShowConfiguration(ModuleConfiguration configuration)
     {
@@ -136,5 +166,6 @@ public static class ModuleLoader
     public class AzureBusSettings
     {
         public string ConnectionString { get; set; }
+        public string ProcessorName { get; set; }
     }
 }

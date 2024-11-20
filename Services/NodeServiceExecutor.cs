@@ -32,31 +32,40 @@ public sealed class NodeServiceExecutor(ModuleConfiguration config, ServiceProvi
             }
 
             var nodeData = await BinarySerialization.DeserializeWithType(rawNodeData, taskType);
-            var moduleConfiguration = BinarySerialization.DeserializeWithType(rawModuleConfiguration, config.ModuleConfigurationType);
+            object? moduleConfiguration = null;
+            if (config.ModuleConfigurationType != null)
+            {
+                if (rawModuleConfiguration is null)
+                {
+                    moduleConfiguration = Activator.CreateInstance(config.ModuleConfigurationType);
+                }
+                else
+                {
+                    moduleConfiguration = await BinarySerialization.DeserializeWithType(rawModuleConfiguration, config.ModuleConfigurationType);
+                }
+            }
 
             if (nodeData == null)
             {
                 session.Error(WorkflowError.ModuleMissingNodeData, $"No data in {nodeType}.");
                 return;
             }
-
+            session.Init();
             switch (executorKind)
             {
                 case ExecutorType.Synchronous:
                     await ExecutorInvoker.InvokeExecuteAsync(executor, nodeData, session, moduleConfiguration);
                     break;
-
                 case ExecutorType.Asynchronous when !session.IsAwaitingCallback:
                     session.IsAwaitingCallback = true;
                     session.ContinueExecution = false;
                     await ExecutorInvoker.InvokeExecuteAsync(executor, nodeData, session, moduleConfiguration);
                     break;
-
                 case ExecutorType.Asynchronous when session.IsAwaitingCallback:
                     session.IsAwaitingCallback = false;
+                    session.ContinueExecution = true;
                     await ExecutorInvoker.InvokeExecuteCallbackAsync(executor, nodeData, session, moduleConfiguration);
                     break;
-
                 default:
                     session.IsAwaitingCallback = false;
                     session.Error(WorkflowError.ModuleMissingServiceInterface, $"Module service not found for {nodeType}");

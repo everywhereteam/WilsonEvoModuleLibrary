@@ -11,10 +11,11 @@ namespace WilsonEvoModuleLibrary.Utility;
 public class TaskRegistry
 {
 
+    public List<Type> Tasks = new();
 
     public void AddTask<ITask>()
     {
-
+        Tasks.Add(typeof(ITask));
     }
 }
 
