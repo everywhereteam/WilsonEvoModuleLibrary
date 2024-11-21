@@ -11,10 +11,11 @@ namespace WilsonEvoModuleLibrary.Services
     public class ResponseHandlerService
     {
         private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> _responseHandlers;
-
+        private readonly ConcurrentDictionary<string, byte[]> _earlyResponses;
         public ResponseHandlerService()
         {
             _responseHandlers = new ConcurrentDictionary<string, TaskCompletionSource<byte[]>>();
+            _earlyResponses = new ConcurrentDictionary<string, byte[]>();
         }
 
         /// <summary>
@@ -26,6 +27,12 @@ namespace WilsonEvoModuleLibrary.Services
         /// <returns>The response data or throws an exception on timeout.</returns>
         public async Task<byte[]> WaitForResponseAsync(string requestId, TimeSpan timeout, CancellationToken token)
         {
+            // Check if the response was received early
+            if (_earlyResponses.TryRemove(requestId, out var earlyResponse))
+            {
+                return earlyResponse;
+            }
+
             var completionSource = new TaskCompletionSource<byte[]>();
             if (!_responseHandlers.TryAdd(requestId, completionSource))
                 throw new InvalidOperationException($"Request with ID {requestId} is already registered.");
@@ -72,12 +79,15 @@ namespace WilsonEvoModuleLibrary.Services
         /// <returns>True if the request was successfully completed; otherwise, false.</returns>
         public bool CompleteRequest(string requestId, byte[] response)
         {
+            // Check if the handler is already registered
             if (_responseHandlers.TryRemove(requestId, out var completionSource))
             {
-                var resultCompletition = completionSource.TrySetResult(response);
-                return resultCompletition;
+                return completionSource.TrySetResult(response);
             }
-            return false;
+
+            // Store the response for later if the handler is not yet registered
+            _earlyResponses[requestId] = response;
+            return true;
         }
 
         /// <summary>

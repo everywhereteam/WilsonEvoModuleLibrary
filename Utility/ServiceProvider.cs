@@ -5,22 +5,25 @@ using WilsonEvoModuleLibrary.Services.Core.Interfaces;
 
 namespace WilsonEvoModuleLibrary.Utility;
 
-public class ServiceProvider(ModuleConfiguration config, IServiceProvider _serviceProvider)
+public class ServiceProvider(IEnumerable<ModuleConfiguration> configs, IServiceProvider _serviceProvider)
 {
- 
-    public (Type, ITaskExecutor, ExecutorType) GetExecutor(string taskType, string? channel)
+
+    public (Type, ITaskExecutor, ExecutorType, ModuleConfiguration) GetExecutor(string taskType, string? channel)
     {
-        if (config.ExecutorTypes.TryGetValue((taskType, channel), out var executorType))
+        foreach (var config in configs)
         {
-            // Resolve a new instance from the service provider
-            var executorInstance = (ITaskExecutor)_serviceProvider.GetService(executorType.executor);
-
-            if (executorInstance == null)
+            if (config.ExecutorTypes.TryGetValue((taskType, channel), out var executorType))
             {
-                throw new InvalidOperationException($"Cannot resolve executor of type {executorType.executor.FullName} from the service provider.");
-            }
+                // Resolve a new instance from the service provider
+                var executorInstance = (ITaskExecutor)_serviceProvider.GetService(executorType.executor);
 
-            return (executorType.taskType, executorInstance, executorType.type);
+                if (executorInstance == null)
+                {
+                    throw new InvalidOperationException($"Cannot resolve executor of type {executorType.executor.FullName} from the service provider.");
+                }
+
+                return (executorType.taskType, executorInstance, executorType.type, config);
+            }
         }
 
         throw new InvalidOperationException($"Executor not found for task type {taskType} and channel '{channel}'.");

@@ -32,7 +32,7 @@ public static class ModuleLoader
 
         ";
 
-    public static void UseDefaultWilsonLogs(this WebApplicationBuilder builder)
+    public static void UseDefaultWilsonLogs(this IServiceCollection builder)
     {
         var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
         var sanitizedAppName = AppDomain.CurrentDomain.FriendlyName.Replace(" ", "_");
@@ -44,40 +44,40 @@ public static class ModuleLoader
 #endif
             .WriteTo.Console().WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7).CreateLogger();
 
-        builder.Host.UseSerilog((host, logger) =>
-        {
-#if DEBUG
-            logger.MinimumLevel.Verbose();
-#else
-            logger.MinimumLevel.Information();
-#endif
-            logger.WriteTo.Console();
-            logger.WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7);
-        });
+//        builder.Host.UseSerilog((host, logger) =>
+//        {
+//#if DEBUG
+//            logger.MinimumLevel.Verbose();
+//#else
+//            logger.MinimumLevel.Information();
+//#endif
+//            logger.WriteTo.Console();
+//            logger.WriteTo.File($"{logDirectory}/{sanitizedAppName}-" + ".txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7);
+//        });
     }
 
-    public static void AddWilson(this WebApplicationBuilder builder, Action<(ModuleConfiguration Configuration, IServiceCollection Collection)> configuration = null)
+    public static void AddWilson(this IServiceCollection services, Action<(ModuleConfiguration Configuration, IServiceCollection Collection)> configuration = null)
     {
-        builder.UseDefaultWilsonLogs();
+        services.UseDefaultWilsonLogs();
 
 
-        //var moduleConfig = builder.Configuration.GetSection("WilsonConfig").Get<WilsonConfig>() ?? new WilsonConfig();
-        //builder.Services.Configure<WilsonConfig>(builder.Configuration.GetSection("WilsonConfig"));
+        //var moduleConfig = services.Configuration.GetSection("WilsonConfig").Get<WilsonConfig>() ?? new WilsonConfig();
+        //services.Services.Configure<WilsonConfig>(services.Configuration.GetSection("WilsonConfig"));
         //if (string.IsNullOrWhiteSpace(moduleConfig.Token))
         //{
         //    throw new Exception("Missing token from the configuration, please setup the Appsettings with a valid token.");
         //}
 
-        Log.Information(template);
-        builder.Services.AddSingleton<NodeServiceExecutor>();
-        builder.Services.AddSingleton<ServiceProvider>();
-        builder.Services.AddScoped<ModuleDeploymentService>();
-        builder.Services.AddHostedService<ModuleConfigurationService>();
+        //Log.Information(template);
+        services.AddSingleton<NodeServiceExecutor>();
+        services.AddSingleton<ServiceProvider>();
+        services.AddScoped<ModuleDeploymentService>();
+        services.AddHostedService<ModuleConfigurationService>();
         var conf = new ModuleConfiguration();
-        configuration?.Invoke((conf, builder.Services));
+        configuration?.Invoke((conf, services));
         ShowConfiguration(conf);
 
-        builder.Services.AddSingleton(conf);
+        services.AddSingleton(conf);
     }
 
     public static void Services(this (ModuleConfiguration Configuration, IServiceCollection Collection) builder, Action<ServiceRegistry> service)

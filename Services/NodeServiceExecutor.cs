@@ -8,7 +8,7 @@ using ServiceProvider = WilsonEvoModuleLibrary.Utility.ServiceProvider;
 
 namespace WilsonEvoModuleLibrary.Services;
 
-public sealed class NodeServiceExecutor(ModuleConfiguration config, ServiceProvider serviceRegistry)
+public sealed class NodeServiceExecutor(ServiceProvider serviceRegistry)
 {
     public async Task<ServiceResponse> HandleServiceRequest(ServiceRequest request)
     {
@@ -24,7 +24,7 @@ public sealed class NodeServiceExecutor(ModuleConfiguration config, ServiceProvi
         session.NodeOutput = "ok";
         try
         {
-            var (taskType, executor, executorKind) = serviceRegistry.GetExecutor(nodeType, session.ChannelName);
+            var (taskType, executor, executorKind, config) = serviceRegistry.GetExecutor(nodeType, session.ChannelName);
             if (false)
             {
                 session.Error(WorkflowError.ModuleMissingService, $"Missing service for: {nodeType} and {session.ChannelName}");

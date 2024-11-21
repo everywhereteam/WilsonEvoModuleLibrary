@@ -12,7 +12,7 @@ namespace WilsonEvoModuleLibrary.Hubs;
 public interface IModuleSender
 {
     Task SendTriggerUpdateAsync(ModuleConfiguration configuration, CancellationToken token = default);
-    Task Response(ServiceResponse response, CancellationToken token);
+  //  Task Response(ServiceResponse response, CancellationToken token);
     Task<Result> Start(string shortUrl, string channelName, object? request, string? sessionToken = null, CancellationToken token = default);
     Task<Result> Next(string sessionToken, object response, CancellationToken token = default);
 }

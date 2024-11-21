@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -18,13 +20,17 @@ public interface IUpdateModuleService
     Task UpdateModuleConfigurationAsync(ModuleConfiguration configuration, CancellationToken token);
 }
 
-public sealed class ModuleConfigurationService( IServiceProvider serviceProvider, ModuleConfiguration configuration) : IHostedService
+public sealed class ModuleConfigurationService(IServiceProvider serviceProvider, IEnumerable<ModuleConfiguration> configurations) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<IUpdateModuleService>();
-        await sender.UpdateModuleConfigurationAsync(configuration, cancellationToken);
+        foreach (var configuration in configurations)
+        {
+            await sender.UpdateModuleConfigurationAsync(configuration, cancellationToken);
+        }
+       // await sender.UpdateModuleConfigurationAsync(configuration, cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
